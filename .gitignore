@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Environment variables
+.env
+.env.local
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files (add exceptions below if needed)
+data/
+*.csv
+*.json
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Model checkpoints & outputs
+models/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.pb
+outputs/
+results/
+
+# Logs
+logs/
+*.log
+runs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
