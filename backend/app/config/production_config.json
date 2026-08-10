@@ -1,0 +1,58 @@
+{
+  "version": "demo-v1",
+  "is_demo": true,
+  "currency": "INR",
+  "disclaimer": "DEMONSTRATION ASSUMPTIONS: all production volumes, yields and cost values are illustrative placeholders, NOT real accounting or fab data. units_per_hour values are aligned with production_rate_per_hour in stages.json for coherence.",
+  "rounding_policy": "Calculations keep full float precision internally; values are rounded to 2 decimals (4 for probabilities/rates) only in the API/display layer.",
+  "defaults": {
+    "labour_cost_per_hour": 1200.0,
+    "electricity_cost_per_kwh": 8.0,
+    "downtime_cost_per_hour": 50000.0,
+    "scrap_disposal_cost_per_unit": 20.0,
+    "rework_time_hours_per_unit": 0.1,
+    "rework_energy_kwh_per_unit": 1.9,
+    "rework_material_cost_per_unit": 50.0,
+    "credit_reworked_units_in_lost_value": false
+  },
+  "stage_order": ["cvd", "etching", "cmp", "reflow"],
+  "stage_costs": {
+    "cvd": 100.0,
+    "etching": 150.0,
+    "cmp": 180.0,
+    "reflow": 120.0
+  },
+  "stages": {
+    "cvd": {
+      "baseline_yield_percent": 97.0,
+      "units_per_hour": 120.0,
+      "wafers_per_batch": 25,
+      "dies_per_wafer": null,
+      "product_value_per_good_unit": 550.0,
+      "material_cost_per_unit": 450.0
+    },
+    "etching": {
+      "baseline_yield_percent": 96.0,
+      "units_per_hour": 150.0,
+      "wafers_per_batch": 25,
+      "dies_per_wafer": null,
+      "product_value_per_good_unit": 500.0,
+      "material_cost_per_unit": 500.0
+    },
+    "cmp": {
+      "baseline_yield_percent": 97.5,
+      "units_per_hour": 100.0,
+      "wafers_per_batch": 25,
+      "dies_per_wafer": null,
+      "product_value_per_good_unit": 620.0,
+      "material_cost_per_unit": 520.0
+    },
+    "reflow": {
+      "baseline_yield_percent": 98.0,
+      "units_per_hour": 300.0,
+      "wafers_per_batch": 50,
+      "dies_per_wafer": null,
+      "product_value_per_good_unit": 300.0,
+      "material_cost_per_unit": 180.0
+    }
+  }
+}

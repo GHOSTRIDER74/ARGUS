@@ -1,0 +1,20 @@
+fastapi>=0.115
+uvicorn[standard]>=0.34
+pydantic>=2.12
+pydantic-settings>=2.7
+SQLAlchemy>=2.0.43
+psycopg2-binary>=2.9.11
+alembic>=1.14
+pandas>=2.3.3
+numpy>=2.3
+scikit-learn>=1.7
+joblib>=1.4
+# torch is installed separately from the CPU index:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.9
+python-multipart>=0.0.20
+python-dotenv>=1.0
+# used by the standalone algorithm_pipeline config loader (already pulled in by uvicorn[standard])
+PyYAML>=6.0
+httpx>=0.28
+pytest>=8.3

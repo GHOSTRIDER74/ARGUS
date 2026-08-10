@@ -24,14 +24,29 @@ env/
 *.ipynb
 
 # Data files (add exceptions below if needed)
-data/
+data/**
+!data/**/
+!data/**/.gitkeep
 *.csv
-*.json
 *.parquet
 *.h5
 *.hdf5
 *.pkl
 *.pickle
+
+# JSON data blobs are ignored, but config/manifest JSON is tracked
+*.json
+!backend/app/config/*.json
+!frontend/package.json
+!frontend/tsconfig.json
+!frontend/*.config.json
+
+# Local dev SQLite database
+backend/argus_dev.db
+
+# Node
+node_modules/
+frontend/dist/
 
 # Model checkpoints & outputs
 models/

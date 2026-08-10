@@ -1,0 +1,24 @@
+# ARGUS full-stack development stack.
+# NOTE: PostgreSQL is NOT included — you run your own server.
+# From inside a container, reach your host's PostgreSQL via host.docker.internal.
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # DATABASE_URL removed to fall back to SQLite
+      AUTO_CREATE_TABLES: "true"
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend

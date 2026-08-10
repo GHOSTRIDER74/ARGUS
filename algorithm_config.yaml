@@ -1,0 +1,88 @@
+# ARGUS standalone algorithm pipeline configuration.
+#
+# Everything is configuration-driven: data source, targets, model, thresholds.
+# Stage/parameter definitions come from backend/app/config/stages.json.
+# Run with:  python run_algorithm.py --config algorithm_config.yaml
+
+name: etch-pressure-drift-demo
+
+data:
+  # 'synthetic' uses the existing simulator (with exact ground-truth labels);
+  # 'csv' loads a long- or wide-format CSV (set csv_path, optionally
+  # ground_truth_path to a simulator-produced .ground_truth.json file).
+  source: synthetic
+  simulation:
+    name: etch-pressure-drift
+    duration_hours: 6.0
+    sampling_interval_seconds: 60
+    stages: [etching]
+    seed: 42
+    drifts:
+      - stage_name: etching
+        parameter_name: chamber_pressure
+        drift_type: linear
+        start_fraction: 0.5
+        magnitude_sigmas: 8.0
+        direction: up
+
+preprocessing:
+  resample_interval: 1min
+  interpolation: linear
+  max_ffill_gap: 5
+  outlier_zscore: 4.0
+  generate_features: true
+  rolling_window: 20
+  lags: [1, 5, 10]
+
+# Machine/stage scopes to analyse. Leave empty ([]) to auto-detect every
+# machine/stage pair present in the data.
+targets:
+  - machine_id: ETCH-01
+    stage_name: etching
+
+training:
+  # Set existing_model_id to reuse artifacts from trained_models/drift_detection/<id>
+  existing_model_id: null
+  features: null            # null = all numeric parameters in the wide table
+  sequence_length: 12
+  stride: 1
+  threshold_percentile: 97.0
+  baseline_selection:
+    method: ground_truth    # 'ground_truth' | 'time_range' | 'fraction'
+    fraction: 0.6
+  lstm:
+    hidden_size: 16
+    latent_size: 8
+    num_layers: 1
+    dropout: 0.0
+    epochs: 8
+    batch_size: 32
+    learning_rate: 0.005
+    early_stopping_patience: 4
+
+detection:
+  start_time: null
+  end_time: null
+  cusum:
+    k: 0.5
+    h: 5.0
+  hybrid:
+    cusum_weight: 0.4
+    lstm_weight: 0.6
+    critical_score: 0.9
+  persistence:
+    min_consecutive_windows: 5
+
+# Module 3 (optional, disabled by default): operational & financial impact.
+# All coefficients/costs are demonstration assumptions from the referenced
+# config files (is_demo=true) — not calibrated fab or accounting data.
+module3:
+  enabled: true
+  analysis_period_hours: null   # null = elapsed drift duration (est. start -> detection)
+  downtime_hours: 0.0
+  impact_rule_file: null        # null = backend/app/config/impact_rules.json
+  production_configuration_file: null  # null = backend/app/config/production_config.json
+
+output:
+  results_dir: results
+  save_cleaned_data: true

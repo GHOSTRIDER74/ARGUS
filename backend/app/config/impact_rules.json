@@ -1,0 +1,251 @@
+{
+  "version": "demo-v1",
+  "is_demo": true,
+  "disclaimer": "DEMONSTRATION ASSUMPTIONS: every coefficient in this file is an illustrative placeholder, NOT learned from or calibrated against real fab quality data. Replace with plant-calibrated values before using results for real decisions.",
+  "confidence_adjustment": "multiply_probability",
+  "uncertainty": {
+    "description": "uncertainty_width = base_uncertainty + confidence_penalty * (1 - confidence). missing_confidence_default is used when Module 2 provides no confidence.",
+    "base_uncertainty": 0.15,
+    "confidence_penalty": 0.35,
+    "missing_confidence_default": 0.5
+  },
+  "stages": {
+    "etching": {
+      "parameters": {
+        "chamber_pressure": {
+          "quality_metric": "etch_uniformity",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.0, "deviation": 0.18, "duration_hours": 0.05, "severity": 0.025},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.02},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.06},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.15}
+          ],
+          "reworkable_fraction": 0.4,
+          "scrap_fraction": 0.6
+        },
+        "etchant_gas_flow": {
+          "quality_metric": "etch_selectivity",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.4, "deviation": 0.15, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.004},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.015},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.05},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.12}
+          ],
+          "reworkable_fraction": 0.5,
+          "scrap_fraction": 0.5
+        },
+        "rf_power": {
+          "quality_metric": "plasma_stability",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.2, "deviation": 0.20, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.02},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.055},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.13}
+          ],
+          "reworkable_fraction": 0.4,
+          "scrap_fraction": 0.6
+        },
+        "etch_rate": {
+          "quality_metric": "critical_dimension_control",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -3.8, "deviation": 0.22, "duration_hours": 0.05, "severity": 0.025},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.006},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.025},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.07},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.16}
+          ],
+          "reworkable_fraction": 0.3,
+          "scrap_fraction": 0.7
+        }
+      }
+    },
+    "cvd": {
+      "parameters": {
+        "chamber_temperature": {
+          "quality_metric": "film_thickness_uniformity",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -3.9, "deviation": 0.25, "duration_hours": 0.05, "severity": 0.025},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 1.5, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 4.0, "additional_defect_probability": 0.025},
+            {"max_abs_deviation_percent": 8.0, "additional_defect_probability": 0.07},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.16}
+          ],
+          "reworkable_fraction": 0.3,
+          "scrap_fraction": 0.7
+        },
+        "chamber_pressure": {
+          "quality_metric": "film_density",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.1, "deviation": 0.18, "duration_hours": 0.05, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.02},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.06},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.14}
+          ],
+          "reworkable_fraction": 0.35,
+          "scrap_fraction": 0.65
+        },
+        "gas_flow_rate": {
+          "quality_metric": "film_composition",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.3, "deviation": 0.16, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.004},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.018},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.05},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.12}
+          ],
+          "reworkable_fraction": 0.45,
+          "scrap_fraction": 0.55
+        },
+        "rf_power": {
+          "quality_metric": "plasma_stability",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.2, "deviation": 0.19, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.02},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.055},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.13}
+          ],
+          "reworkable_fraction": 0.4,
+          "scrap_fraction": 0.6
+        },
+        "deposition_rate": {
+          "quality_metric": "film_thickness_control",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -3.7, "deviation": 0.24, "duration_hours": 0.05, "severity": 0.025},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.006},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.028},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.075},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.17}
+          ],
+          "reworkable_fraction": 0.25,
+          "scrap_fraction": 0.75
+        }
+      }
+    },
+    "cmp": {
+      "parameters": {
+        "downforce_pressure": {
+          "quality_metric": "planarity",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -3.9, "deviation": 0.23, "duration_hours": 0.05, "severity": 0.025},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.006},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.025},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.07},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.15}
+          ],
+          "reworkable_fraction": 0.3,
+          "scrap_fraction": 0.7
+        },
+        "platen_speed": {
+          "quality_metric": "removal_uniformity",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.3, "deviation": 0.17, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.004},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.018},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.05},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.12}
+          ],
+          "reworkable_fraction": 0.5,
+          "scrap_fraction": 0.5
+        },
+        "slurry_flow_rate": {
+          "quality_metric": "surface_quality",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.4, "deviation": 0.15, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.004},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.015},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.045},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.11}
+          ],
+          "reworkable_fraction": 0.5,
+          "scrap_fraction": 0.5
+        },
+        "removal_rate": {
+          "quality_metric": "thickness_target_control",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -3.8, "deviation": 0.21, "duration_hours": 0.05, "severity": 0.025},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.006},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.025},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.07},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.15}
+          ],
+          "reworkable_fraction": 0.35,
+          "scrap_fraction": 0.65
+        }
+      }
+    },
+    "reflow": {
+      "parameters": {
+        "peak_temperature": {
+          "quality_metric": "solder_joint_integrity",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -3.6, "deviation": 0.35, "duration_hours": 0.05, "severity": 0.03},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 1.0, "additional_defect_probability": 0.006},
+            {"max_abs_deviation_percent": 2.5, "additional_defect_probability": 0.03},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.09},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.2}
+          ],
+          "reworkable_fraction": 0.6,
+          "scrap_fraction": 0.4
+        },
+        "conveyor_speed": {
+          "quality_metric": "thermal_profile_compliance",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.2, "deviation": 0.2, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 2.0, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.02},
+            {"max_abs_deviation_percent": 10.0, "additional_defect_probability": 0.06},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.13}
+          ],
+          "reworkable_fraction": 0.6,
+          "scrap_fraction": 0.4
+        },
+        "time_above_liquidus": {
+          "quality_metric": "wetting_quality",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.1, "deviation": 0.14, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.005},
+            {"max_abs_deviation_percent": 12.0, "additional_defect_probability": 0.02},
+            {"max_abs_deviation_percent": 20.0, "additional_defect_probability": 0.06},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.13}
+          ],
+          "reworkable_fraction": 0.55,
+          "scrap_fraction": 0.45
+        },
+        "cooling_rate": {
+          "quality_metric": "microstructure_quality",
+          "impact_model": "logistic",
+          "logistic_coefficients": {"intercept": -4.3, "deviation": 0.13, "duration_hours": 0.04, "severity": 0.02},
+          "piecewise_bands": [
+            {"max_abs_deviation_percent": 5.0, "additional_defect_probability": 0.004},
+            {"max_abs_deviation_percent": 12.0, "additional_defect_probability": 0.015},
+            {"max_abs_deviation_percent": 20.0, "additional_defect_probability": 0.05},
+            {"max_abs_deviation_percent": null, "additional_defect_probability": 0.11}
+          ],
+          "reworkable_fraction": 0.55,
+          "scrap_fraction": 0.45
+        }
+      }
+    }
+  }
+}
