@@ -1,0 +1,484 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ──────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --bg:              #FBFBFA;
+    --surface:         #FFFFFF;
+    --surface-2:       #F4F4F5;
+    --surface-3:       #E4E4E7;
+
+    --border:          #E5E7EB;
+    --border-soft:     #F3F4F6;
+
+    --text-primary:   #0F1115;
+    --text-secondary: #5A5F6B;
+    --text-muted:     #8C919E;
+
+    /* Accent color: muted slate-blue */
+    --accent:          #4361EE;
+    --accent-hover:    #3A56D4;
+    --accent-light:    rgba(67, 97, 238, 0.08);
+
+    /* Status colors */
+    --green-text:      #16A34A;
+    --green-bg:        #DCFCE7;
+    --green-border:    #BBF7D0;
+
+    --amber-text:      #D97706;
+    --amber-bg:        #FEF9C3;
+    --amber-border:    #FDE68A;
+
+    --red-text:        #DC2626;
+    --red-bg:          #FEE2E2;
+    --red-border:      #FECDD3;
+
+    --slate-text:      #5A5F6B;
+    --slate-bg:        #F4F4F5;
+
+    --sidebar-width:   240px;
+    --sidebar-bg:      #FFFFFF;
+    --topbar-h:        56px;
+  }
+
+  html {
+    font-family: 'Inter Tight', 'Geist', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    background-color: var(--bg);
+    color: var(--text-primary);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-secondary);
+    font-family: 'Inter Tight', 'Geist', 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Söhne / Neue Montreal Style Font System (Inter Tight / Geist) ─────── */
+  h1 {
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--text-primary);
+  }
+
+  h2 {
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    color: var(--text-primary);
+  }
+
+  h3 {
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: var(--text-primary);
+  }
+
+  h4, h5, h6 {
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  /* Monospace numbers/readings: light weight (300-400), not bold */
+  .font-mono, code, pre {
+    font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+    font-weight: 400;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+  * { box-sizing: border-box; }
+}
+
+/* ─── Components ──────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* ── Glassmorphism Design System ────────────────────────────────────────── */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    padding: 1.75rem;
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+    border-color: rgba(255, 255, 255, 0.90);
+  }
+
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.50);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    border-radius: 9999px;
+  }
+
+  .glass-pill {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all active:scale-95;
+    background: rgba(255, 255, 255, 0.50);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+  .glass-pill:hover {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.95);
+  }
+
+  /* Standard Cards: Neutral white, thin 1px #E5E7EB border */
+  .card {
+    @apply rounded-xl bg-white p-7;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .card:hover {
+    border-color: #D1D5DB;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .card-sm {
+    @apply rounded-lg bg-white p-5;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+
+  /* Status-bordered cards for Digital Twin */
+  .card-status-green  { border-left: 3px solid var(--green-text) !important; }
+  .card-status-amber  { border-left: 3px solid var(--amber-text) !important; }
+  .card-status-red    { border-left: 3px solid var(--red-text) !important; }
+
+  /* ── Status badges ────────────────────────────────────────────────────────── */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold leading-none;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  .status-badge-green  { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
+  .status-badge-amber  { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
+  .status-badge-red    { background: var(--red-bg);   color: var(--red-text);   border: 1px solid var(--red-border); }
+  .status-badge-slate  { background: var(--slate-bg); color: var(--slate-text); border: 1px solid var(--border); }
+
+  /* ── Typography helpers ───────────────────────────────────────────────────── */
+  .section-label {
+    @apply text-[11px] font-semibold uppercase tracking-wider;
+    color: var(--text-muted);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+
+  .mono-val {
+    font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+    font-weight: 400;
+    color: var(--text-primary);
+  }
+
+  /* ── Tables ───────────────────────────────────────────────────────────────── */
+  .tbl {
+    @apply w-full text-sm;
+  }
+  .tbl thead th {
+    @apply px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-left;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .tbl tbody tr {
+    border-bottom: 1px solid var(--border-soft);
+    transition: background-color 120ms ease;
+  }
+  .tbl tbody tr:hover {
+    background: var(--surface-2);
+  }
+  .tbl tbody tr:last-child {
+    border-bottom: none;
+  }
+  .tbl td {
+    @apply px-4 py-3;
+    color: var(--text-secondary);
+  }
+  .col-num { @apply text-right font-mono font-normal; }
+  .col-txt { @apply text-left; }
+
+  /* ── Buttons ──────────────────────────────────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white active:scale-95 transition-all;
+    background: var(--accent);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+    box-shadow: 0 4px 14px rgba(67, 97, 238, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.35);
+  }
+  .btn-primary:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium active:scale-95 transition-all;
+    border-color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.50);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--text-primary);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.95);
+  }
+  .btn-secondary:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .btn-ghost {
+    @apply text-sm font-medium transition-colors active:scale-95;
+    color: var(--text-secondary);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .btn-ghost:hover { color: var(--accent); }
+
+  .btn-danger-ghost {
+    @apply text-sm font-medium transition-colors active:scale-95;
+    color: var(--red-text);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .btn-danger-ghost:hover { text-decoration: underline; }
+
+  /* ── Form Fields ──────────────────────────────────────────────────────────── */
+  .field {
+    @apply w-full rounded-lg px-3.5 py-2.5 text-sm;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+  }
+  .field-label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wider;
+    color: var(--text-muted);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+
+  /* ── Empty states ─────────────────────────────────────────────────────────── */
+  .empty-state {
+    @apply flex flex-col items-center justify-center gap-3 py-14 text-center;
+  }
+  .empty-state-icon { color: var(--text-muted); }
+  .empty-state-title {
+    @apply text-base font-semibold;
+    color: var(--text-primary);
+  }
+  .empty-state-body {
+    @apply text-sm max-w-sm;
+    color: var(--text-secondary);
+  }
+
+  /* ── Inline Messages ──────────────────────────────────────────────────────── */
+  .inline-success {
+    @apply rounded-lg px-4 py-2.5 text-sm font-medium;
+    background: var(--green-bg);
+    color: var(--green-text);
+    border: 1px solid var(--green-border);
+  }
+  .inline-error {
+    @apply rounded-lg px-4 py-2.5 text-sm font-medium;
+    background: var(--red-bg);
+    color: var(--red-text);
+    border: 1px solid var(--red-border);
+  }
+  .inline-warn {
+    @apply rounded-lg px-4 py-2.5 text-xs font-medium;
+    background: var(--amber-bg);
+    color: var(--amber-text);
+    border: 1px solid var(--amber-border);
+  }
+
+  /* ── Sidebar Navigation Links ─────────────────────────────────────────────── */
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors active:scale-95;
+    color: var(--text-secondary);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .sidebar-link:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+  }
+  .sidebar-link.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ── Nav Links (Top Nav for Hero Zone) ────────────────────────────────────── */
+  .nav-link {
+    @apply px-4 py-2 text-sm font-medium transition-all duration-150 rounded-full active:scale-95;
+    color: var(--text-secondary);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.60);
+  }
+
+  /* ── Tag Pills ────────────────────────────────────────────────────────────── */
+  .tag-pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold;
+    background: var(--slate-bg);
+    color: var(--slate-text);
+    border: 1px solid var(--border);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+  .tag-pill-accent {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold;
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid rgba(67, 97, 238, 0.20);
+    font-family: 'Inter Tight', 'Geist', sans-serif;
+  }
+
+  /* ── Feature Card ─────────────────────────────────────────────────────────── */
+  .feature-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── React Flow Architecture Diagram Nodes ──────────────────────────────── */
+  .flow-node {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 200px;
+    max-width: 230px;
+    cursor: pointer;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+  .flow-node-hub {
+    border-color: #C7D2FE;
+    background: #F5F7FF;
+    cursor: default;
+  }
+  .flow-node-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flow-node-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .flow-node-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0F1115;
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+  .flow-node-sub {
+    font-size: 10px;
+    color: #5A5F6B;
+    line-height: 1.4;
+  }
+  .flow-node-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #0F1115;
+    background: #F4F4F5;
+    padding: 3px 7px;
+    border-radius: 4px;
+  }
+  .flow-stat-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  /* React Flow handle dots — hide by default, show on hover */
+  .flow-handle {
+    width: 8px !important;
+    height: 8px !important;
+    background: #CBD5E1 !important;
+    border: 2px solid #fff !important;
+    border-radius: 50% !important;
+  }
+  /* React Flow controls panel */
+  .flow-controls button {
+    background: #fff !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 6px !important;
+    color: #5A5F6B !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+  }
+  .flow-controls button:hover {
+    background: #F4F4F5 !important;
+    color: #0F1115 !important;
+  }
+  /* Override React Flow panel/minimap default backgrounds */
+  .react-flow__background {
+    background-color: #FAFAFA !important;
+  }
+}

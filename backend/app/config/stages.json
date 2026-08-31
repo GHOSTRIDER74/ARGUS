@@ -1,0 +1,71 @@
+{
+  "config_version": "1.0",
+  "description": "Config-driven process stage definitions. Add/replace stages here to adapt ARGUS to any electronic manufacturing machine — nothing is hard-coded in application logic.",
+  "stages": [
+    {
+      "name": "cvd",
+      "display_name": "Chemical Vapor Deposition",
+      "machine_prefix": "CVD",
+      "production_rate_per_hour": 120,
+      "stage_duration_min": 45,
+      "energy_kwh_per_hour": 55.0,
+      "material_consumption_per_hour": 2.4,
+      "chemical_consumption_per_hour": 1.8,
+      "parameters": [
+        {"name": "chamber_temperature", "unit": "C", "target": 400.0, "lower": 385.0, "upper": 415.0, "sigma": 2.5},
+        {"name": "chamber_pressure", "unit": "mTorr", "target": 250.0, "lower": 230.0, "upper": 270.0, "sigma": 4.0},
+        {"name": "gas_flow_rate", "unit": "sccm", "target": 500.0, "lower": 470.0, "upper": 530.0, "sigma": 6.0},
+        {"name": "rf_power", "unit": "W", "target": 300.0, "lower": 285.0, "upper": 315.0, "sigma": 3.0},
+        {"name": "deposition_rate", "unit": "nm/min", "target": 12.0, "lower": 10.8, "upper": 13.2, "sigma": 0.25}
+      ]
+    },
+    {
+      "name": "etching",
+      "display_name": "Plasma Etching",
+      "machine_prefix": "ETCH",
+      "production_rate_per_hour": 150,
+      "stage_duration_min": 30,
+      "energy_kwh_per_hour": 40.0,
+      "material_consumption_per_hour": 0.9,
+      "chemical_consumption_per_hour": 3.2,
+      "parameters": [
+        {"name": "chamber_pressure", "unit": "mTorr", "target": 65.0, "lower": 58.0, "upper": 72.0, "sigma": 1.2},
+        {"name": "etchant_gas_flow", "unit": "sccm", "target": 180.0, "lower": 168.0, "upper": 192.0, "sigma": 2.5},
+        {"name": "rf_power", "unit": "W", "target": 450.0, "lower": 430.0, "upper": 470.0, "sigma": 4.0},
+        {"name": "etch_rate", "unit": "nm/min", "target": 85.0, "lower": 78.0, "upper": 92.0, "sigma": 1.5}
+      ]
+    },
+    {
+      "name": "cmp",
+      "display_name": "Chemical Mechanical Planarization",
+      "machine_prefix": "CMP",
+      "production_rate_per_hour": 100,
+      "stage_duration_min": 20,
+      "energy_kwh_per_hour": 25.0,
+      "material_consumption_per_hour": 1.1,
+      "chemical_consumption_per_hour": 5.5,
+      "parameters": [
+        {"name": "downforce_pressure", "unit": "psi", "target": 5.0, "lower": 4.6, "upper": 5.4, "sigma": 0.08},
+        {"name": "platen_speed", "unit": "rpm", "target": 90.0, "lower": 84.0, "upper": 96.0, "sigma": 1.2},
+        {"name": "slurry_flow_rate", "unit": "ml/min", "target": 200.0, "lower": 185.0, "upper": 215.0, "sigma": 3.0},
+        {"name": "removal_rate", "unit": "nm/min", "target": 250.0, "lower": 230.0, "upper": 270.0, "sigma": 4.5}
+      ]
+    },
+    {
+      "name": "reflow",
+      "display_name": "Reflow Soldering",
+      "machine_prefix": "RFLW",
+      "production_rate_per_hour": 300,
+      "stage_duration_min": 8,
+      "energy_kwh_per_hour": 32.0,
+      "material_consumption_per_hour": 4.0,
+      "chemical_consumption_per_hour": 0.4,
+      "parameters": [
+        {"name": "peak_temperature", "unit": "C", "target": 245.0, "lower": 240.0, "upper": 250.0, "sigma": 1.0},
+        {"name": "conveyor_speed", "unit": "cm/min", "target": 80.0, "lower": 76.0, "upper": 84.0, "sigma": 0.8},
+        {"name": "time_above_liquidus", "unit": "s", "target": 60.0, "lower": 50.0, "upper": 70.0, "sigma": 2.0},
+        {"name": "cooling_rate", "unit": "C/s", "target": 3.0, "lower": 2.5, "upper": 3.5, "sigma": 0.1}
+      ]
+    }
+  ]
+}
