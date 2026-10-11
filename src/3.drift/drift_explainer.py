@@ -3,10 +3,10 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 
 FEATURE_COLS = [
-    "reflow_temp_c",
-    "solder_viscosity_pa",
-    "etch_concentration",
-    "inspection_defect_rate",
+    "rf_power",
+    "etch_rate",
+    "chamber_pressure",
+    "etchant_gas_flow",
 ]
 
 def explain_drift(X_windows, labels, n_background=200):

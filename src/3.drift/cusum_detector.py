@@ -2,13 +2,12 @@ import numpy as np
 import pandas as pd
 
 FEATURE_COLS = [
-    "reflow_temp_c",
-    "solder_viscosity_pa",
-    "etch_concentration",
-    "inspection_defect_rate",
+    "rf_power",
+    "etch_rate",
+    "chamber_pressure",
+    "etchant_gas_flow",
 ]
-
-def cusum_detect(series: np.ndarray, k: float = 0.5, h: float = 5.0):
+def cusum_detect(series: np.ndarray, k: float = 1.2, h: float = 15.0):
     """
     One-sided CUSUM on a single standardised time series.
     k = allowance (slack), h = decision threshold.
@@ -22,7 +21,9 @@ def cusum_detect(series: np.ndarray, k: float = 0.5, h: float = 5.0):
     alerts = np.zeros(len(normed), dtype=int)
 
     for i in range(1, len(normed)):
-        cusum_pos[i] = max(0, cusum_pos[i-1] + normed[i] - k)
+        val = normed[i]
+        decay = 0.75 if abs(val) < k else 0.95
+        cusum_pos[i] = max(0, cusum_pos[i-1] * decay + val - k)
         if cusum_pos[i] > h:
             alerts[i] = 1
 

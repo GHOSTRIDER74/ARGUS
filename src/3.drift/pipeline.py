@@ -3,26 +3,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-from data_generator import generate_pcb_data
 from preprocessor import preprocess, FEATURE_COLS
 from cusum_detector import run_cusum
 from lstm_autoencoder import train_autoencoder, score_windows, get_lstm_alerts
 from drift_explainer import explain_drift
-
-WINDOW_SIZE = 30
-DRIFT_START = 1200
+from real_data_loader import load_and_clean_secom # (The script we wrote previously)
 
 def run():
-    # ── Step 1: Generate data ──
-    print("Generating PCB process data...")
-    df = generate_pcb_data(n_samples=2000, drift_start=DRIFT_START)
+    # ── Step 1: Ingest Real Data ──
+    print("Ingesting real semiconductor telemetry...")
+    df = load_and_clean_secom('uci-secom.csv')
+    
+    # We will use the first 500 time-steps as our "healthy baseline" for CUSUM and LSTM
+    # In a real factory, this would be a known period of high-yield production
+    DRIFT_START = 500 
 
     # ── Step 2: Preprocess ──
     print("Preprocessing...")
-    X_windows, scaler, labels = preprocess(df, window_size=WINDOW_SIZE)
-    n_normal = DRIFT_START - WINDOW_SIZE
-    X_normal = X_windows[:n_normal]
-
+    X_windows, scaler, labels = preprocess(df, window_size=30)
+    
+    # Train LSTM only on the healthy baseline windows
+    X_normal = X_windows[:DRIFT_START]
     # ── Step 3a: CUSUM ──
     print("Running CUSUM...")
     cusum_df = run_cusum(df)
