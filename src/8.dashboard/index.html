@@ -4,9 +4,143 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ARGUS Dashboard</title>
+    <title>ARGUS // Telemetry — Real-Time Observability & Electronics Manufacturing Monitoring</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <!-- Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Tailwind CSS with custom theme -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-white": "#FFFFFF",
+              "background": "#fcf9f2",
+              "secondary-fixed": "#ffdad5",
+              "secondary-container": "#fe8f80",
+              "secondary": "#9b4338",
+              "primary-fixed": "#e5e2e1",
+              "inverse-primary": "#c8c6c5",
+              "on-error-container": "#93000a",
+              "footer-dark": "#121212",
+              "inverse-surface": "#31312c",
+              "on-tertiary": "#ffffff",
+              "outline": "#747878",
+              "on-secondary": "#ffffff",
+              "on-surface": "#1c1c18",
+              "surface-container-lowest": "#ffffff",
+              "surface-cream-alt": "#EDE7DF",
+              "on-secondary-fixed-variant": "#7d2c23",
+              "surface-container-high": "#ebe8e1",
+              "on-error": "#ffffff",
+              "coral-subtle": "#FADCD7",
+              "coral-primary": "#FB8D7E",
+              "on-primary-fixed": "#1c1b1b",
+              "primary": "#000000",
+              "on-surface-variant": "#444748",
+              "secondary-fixed-dim": "#ffb4a9",
+              "tertiary-fixed-dim": "#cac5cc",
+              "on-primary-container": "#858383",
+              "outline-variant": "#c4c7c7",
+              "surface-variant": "#e5e2db",
+              "on-tertiary-fixed-variant": "#49454c",
+              "surface-container-highest": "#e5e2db",
+              "primary-fixed-dim": "#c8c6c5",
+              "tertiary-container": "#1d1b20",
+              "tertiary": "#000000",
+              "inverse-on-surface": "#f3f0e9",
+              "error": "#ba1a1a",
+              "surface-container-low": "#f6f3ec",
+              "surface": "#fcf9f2",
+              "on-tertiary-fixed": "#1d1b20",
+              "surface-tint": "#5f5e5e",
+              "surface-container": "#f1eee7",
+              "tertiary-fixed": "#e7e0e8",
+              "on-tertiary-container": "#878289",
+              "on-primary-fixed-variant": "#474646",
+              "on-secondary-container": "#76271e",
+              "primary-container": "#1c1b1b",
+              "surface-bright": "#fcf9f2",
+              "surface-dim": "#dcdad3",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed": "#400101",
+              "on-background": "#1c1c18",
+              "on-primary": "#ffffff"
+            },
+            borderRadius: {
+              "DEFAULT": "1rem",
+              "lg": "2rem",
+              "xl": "3rem",
+              "full": "9999px"
+            },
+            fontFamily: {
+              "display-hero-mobile": ["Space Grotesk", "sans-serif"],
+              "body-sm": ["Manrope", "sans-serif"],
+              "label-md": ["Manrope", "sans-serif"],
+              "label-caps": ["Manrope", "sans-serif"],
+              "body-lg": ["Manrope", "sans-serif"],
+              "headline-xl": ["Space Grotesk", "sans-serif"],
+              "headline-md": ["Space Grotesk", "sans-serif"],
+              "stat-display-mobile": ["Space Grotesk", "sans-serif"],
+              "headline-xl-mobile": ["Space Grotesk", "sans-serif"],
+              "body-md": ["Manrope", "sans-serif"],
+              "display-hero": ["Space Grotesk", "sans-serif"],
+              "stat-display": ["Space Grotesk", "sans-serif"],
+              "headline-lg": ["Space Grotesk", "sans-serif"],
+              "mono": ["JetBrains Mono", "monospace"]
+            },
+            fontSize: {
+              "display-hero-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+              "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+              "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+              "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+              "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+              "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+              "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+              "stat-display-mobile": ["44px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+              "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+              "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }],
+              "display-hero": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+              "stat-display": ["64px", { "lineHeight": "68px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+              "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 1;
+      }
+      .pixel-tile {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+      }
+      @media (min-width: 768px) {
+        .pixel-tile {
+          width: 24px;
+          height: 24px;
+        }
+      }
+      .pixel-pattern {
+        background-image: 
+          radial-gradient(#fe8f80 1.5px, transparent 1.5px),
+          radial-gradient(#fe8f80 1.5px, transparent 1.5px);
+        background-size: 12px 12px;
+        background-position: 0 0, 6px 6px;
+      }
+    </style>
   </head>
-  <body>
+  <body class="bg-background text-on-surface antialiased font-body-md selection:bg-coral-subtle selection:text-primary">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

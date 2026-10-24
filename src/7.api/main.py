@@ -353,8 +353,15 @@ def run_simulation(req: SimulationRequest):
     )
     df = engine.generate(cfg)
 
-    # Return summary + first 200 records
-    records = df.head(200).to_dict(orient="records")
+    # Prepare records for charting (downsample if huge to keep Recharts snappy)
+    max_chart_points = 1500
+    if len(df) > max_chart_points:
+        step = int(np.ceil(len(df) / max_chart_points))
+        chart_df = df.iloc[::step].copy()
+    else:
+        chart_df = df
+
+    records = chart_df.to_dict(orient="records")
     return {
         "config": cfg.to_dict(),
         "total_generated": len(df),
@@ -365,7 +372,8 @@ def run_simulation(req: SimulationRequest):
             "total_co2": round(float(df["co2_emission_kg"].sum()), 2),
             "total_cost": round(float(df["total_impact_cost_usd"].sum()), 2),
         },
-        "sample_records": records,
+        "data": records,
+        "sample_records": records[:200],
     }
 
 

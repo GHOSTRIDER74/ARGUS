@@ -84,6 +84,7 @@ class ScenarioEngine:
 
         df = pd.DataFrame(data)
         df["timestep"] = t
+        df["step"] = t
         df["drift_injected"] = t >= config.drift_onset if config.drift_type != "none" else False
 
         # Add LCA columns

@@ -27,94 +27,136 @@ export function DriftDiagnosis() {
     }
   };
 
-  if (!data) return <div className="loading-state"><div className="loading-spinner" /></div>;
+  if (!data) return <div className="loading-state"><div className="loading-spinner" /> Loading drift telemetry...</div>;
 
   return (
-    <div>
-      <div className="page-grid-2">
-        <div className="panel" style={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
-          <div className="panel-header">
-            <h2 className="panel-title">Drift Events Triage</h2>
-            <div className="badge">{data.total_events} Events</div>
+    <div className="space-y-8 text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-headline-xl text-headline-xl font-bold text-primary tracking-tight">
+            Drift & CUSUM Diagnosis
+          </h1>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+            Statistical change-point detection & SHAP root-cause feature attribution.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full bg-coral-subtle text-secondary font-label-caps text-label-caps font-bold">
+            {data.total_events || 0} Drift Events Captured
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Drift Events Triage Table */}
+        <div className="lg:col-span-5 bg-surface-white rounded-3xl p-6 md:p-7 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+            <h2 className="font-headline-md text-headline-md font-bold text-primary">Drift Events Triage</h2>
+            <span className="material-symbols-outlined text-secondary text-[20px]">radar</span>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <table className="data-table">
+
+          <div className="overflow-y-auto max-h-[560px] pr-1">
+            <table className="w-full text-left font-body-sm text-body-sm">
               <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Machine</th>
-                  <th>Parameter</th>
-                  <th>Severity</th>
+                <tr className="border-b border-outline-variant/30 font-label-caps text-label-caps text-on-surface-variant">
+                  <th className="py-2 px-2">TIME</th>
+                  <th className="py-2 px-2">CHAMBER</th>
+                  <th className="py-2 px-2">PARAMETER</th>
+                  <th className="py-2 px-2 text-right">SEVERITY</th>
                 </tr>
               </thead>
-              <tbody>
-                {data.events.map((evt: any) => (
-                  <tr 
-                    key={evt.id} 
-                    onClick={() => handleSelect(evt)}
-                    style={{ 
-                      cursor: 'pointer',
-                      background: selectedEvent?.id === evt.id ? 'var(--bg-input)' : 'transparent',
-                      borderLeft: selectedEvent?.id === evt.id ? '3px solid var(--accent-primary)' : '3px solid transparent'
-                    }}
-                  >
-                    <td className="mono">{evt.time}</td>
-                    <td>{evt.machine_id}</td>
-                    <td>{evt.parameter.replace(/_/g, ' ')}</td>
-                    <td><StatusBadge status={evt.severity} /></td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-outline-variant/20 font-mono text-[12px]">
+                {data.events.map((evt: any) => {
+                  const isSelected = selectedEvent?.id === evt.id;
+                  return (
+                    <tr 
+                      key={evt.id} 
+                      onClick={() => handleSelect(evt)}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected 
+                          ? "bg-secondary-fixed/50 font-bold border-l-4 border-secondary" 
+                          : "hover:bg-surface-container-low"
+                      }`}
+                    >
+                      <td className="py-2.5 px-2 text-on-surface-variant">{evt.time}</td>
+                      <td className="py-2.5 px-2 font-semibold text-primary">{evt.machine_id}</td>
+                      <td className="py-2.5 px-2 text-on-surface">{evt.parameter.replace(/_/g, ' ')}</td>
+                      <td className="py-2.5 px-2 text-right">
+                        <StatusBadge status={evt.severity} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
 
-        <div className="panel" style={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
-          <div className="panel-header">
-            <h2 className="panel-title">Diagnosis & Telemetry</h2>
-            {selectedEvent && <div className="text-xs text-gray-500 font-mono">ID: {selectedEvent.id}</div>}
+        {/* Right Column: Diagnosis & Time Series Waveform */}
+        <div className="lg:col-span-7 bg-surface-white rounded-3xl p-6 md:p-8 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+            <div>
+              <h2 className="font-headline-md text-headline-md font-bold text-primary">Diagnosis & Root Cause</h2>
+              {selectedEvent && (
+                <span className="font-mono text-xs text-on-surface-variant">Event ID: {selectedEvent.id}</span>
+              )}
+            </div>
+            <span className="material-symbols-outlined text-secondary text-[22px]">troubleshoot</span>
           </div>
-          
+
           {selectedEvent ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <div className="p-3 bg-gray-50 rounded-md border border-gray-100">
-                  <div className="text-xs text-gray-500 uppercase mb-1">Root Cause Parameter</div>
-                  <div className="font-semibold">{selectedEvent.root_cause}</div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
+                  <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">Root Cause</div>
+                  <div className="font-semibold text-primary mt-1 text-sm">{selectedEvent.root_cause}</div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-md border border-gray-100">
-                  <div className="text-xs text-gray-500 uppercase mb-1">Pattern</div>
-                  <div className="font-semibold capitalize">{selectedEvent.drift_pattern} Drift</div>
+
+                <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
+                  <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">Drift Pattern</div>
+                  <div className="font-semibold text-primary mt-1 text-sm capitalize">{selectedEvent.drift_pattern}</div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-md border border-gray-100">
-                  <div className="text-xs text-gray-500 uppercase mb-1">Mean Shift</div>
-                  <div className="font-mono">{selectedEvent.mean_shift.toFixed(4)}</div>
+
+                <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
+                  <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">Mean Shift (μ)</div>
+                  <div className="font-mono text-secondary mt-1 font-bold text-sm">+{selectedEvent.mean_shift.toFixed(4)}σ</div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-md border border-gray-100">
-                  <div className="text-xs text-gray-500 uppercase mb-1">Detection Confidence</div>
-                  <div className="font-mono">{(selectedEvent.confidence * 100).toFixed(1)}%</div>
+
+                <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
+                  <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">Confidence</div>
+                  <div className="font-mono text-emerald-700 mt-1 font-bold text-sm">{(selectedEvent.confidence * 100).toFixed(1)}%</div>
                 </div>
               </div>
 
-              <div style={{ flex: 1, marginTop: '20px' }}>
-                <div className="text-sm font-semibold mb-2 uppercase text-gray-700">Parameter Telemetry ({chartData?.parameter})</div>
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-primary">
+                    Sensor Telemetry Waveform: <code className="text-secondary">{chartData?.parameter}</code>
+                  </span>
+                  <span className="font-mono text-xs text-on-surface-variant">CUSUM Decision Bounds: [-2.0, +2.0]</span>
+                </div>
+
                 {chartData ? (
-                  <TrendChart 
-                    data={chartData.data} 
-                    xKey="index" 
-                    yKey="value" 
-                    target={chartData.target}
-                    upperLimit={chartData.upper_limit}
-                    lowerLimit={chartData.lower_limit}
-                    height="100%"
-                  />
+                  <div className="bg-surface-container-lowest p-2 rounded-2xl border border-outline-variant/20">
+                    <TrendChart 
+                      data={chartData.data} 
+                      xKey="index" 
+                      yKey="value" 
+                      target={chartData.target}
+                      upperLimit={chartData.upper_limit}
+                      lowerLimit={chartData.lower_limit}
+                      height={280}
+                    />
+                  </div>
                 ) : (
-                  <div className="loading-state"><div className="loading-spinner"/></div>
+                  <div className="loading-state"><div className="loading-spinner"/> Loading chart...</div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="empty-state">Select an event to view diagnosis details</div>
+            <div className="empty-state text-on-surface-variant py-12 text-center">
+              Select an event from the triage list to inspect CUSUM drift and SHAP attribution.
+            </div>
           )}
         </div>
       </div>

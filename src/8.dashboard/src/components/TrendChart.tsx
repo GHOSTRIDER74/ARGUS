@@ -9,6 +9,7 @@ interface TrendChartProps {
   upperLimit?: number;
   lowerLimit?: number;
   height?: number | string;
+  valueFormatter?: (value: number) => string;
 }
 
 export function TrendChart({ 
@@ -19,7 +20,8 @@ export function TrendChart({
   target,
   upperLimit,
   lowerLimit,
-  height = 300
+  height = 300,
+  valueFormatter
 }: TrendChartProps) {
   
   if (!data || data.length === 0) {
@@ -32,9 +34,9 @@ export function TrendChart({
   }
 
   return (
-    <div style={{ width: '100%', height }}>
+    <div style={{ width: '100%', height, overflow: 'hidden' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+        <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-light)" />
           <XAxis 
             dataKey={xKey} 
@@ -51,6 +53,10 @@ export function TrendChart({
             domain={['auto', 'auto']}
           />
           <Tooltip 
+            formatter={(val: any) => [
+              valueFormatter ? valueFormatter(Number(val)) : val,
+              yKey.replace(/_/g, " ").toUpperCase()
+            ]}
             contentStyle={{ 
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-medium)',

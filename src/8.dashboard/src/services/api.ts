@@ -11,7 +11,7 @@ export const api = {
 
   // Drift
   getDriftEvents: () => fetch(`${API_BASE}/drift/events`).then(r => r.json()),
-  getDriftTimeseries: (param: string) => fetch(`${API_BASE}/drift/timeseries/${param}`).then(r => r.json()),
+  getDriftTimeseries: (param: string, downsample: number = 4) => fetch(`${API_BASE}/drift/timeseries/${param}?downsample=${downsample}`).then(r => r.json()),
 
   // Impact
   getImpactAggregate: () => fetch(`${API_BASE}/impact/aggregate`).then(r => r.json()),

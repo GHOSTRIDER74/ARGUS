@@ -5,17 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Convert from baseline model units to realistic INR cleanroom economics (1 USD = ₹83.33)
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
+  const inrValue = value * 83.33;
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
+    currency: 'INR',
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(inrValue);
 }
 
 export function formatNumber(value: number, decimals: number = 2): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value);
