@@ -97,8 +97,15 @@ export function FacilityView() {
 
   useEffect(() => {
     fetchFacilityData();
-    // Poll every 1 second to sync with streaming telemetry
-    const interval = setInterval(fetchFacilityData, 1000);
+    // Ingest telemetry & poll every 1 second to keep the 3D twin alive with live data
+    const interval = setInterval(async () => {
+      try {
+        await api.ingestToTwin(5);
+      } catch (e) {
+        // Fallback to fetch if ingest fails
+      }
+      fetchFacilityData();
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
