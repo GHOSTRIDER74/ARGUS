@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { StatusBadge } from "./StatusBadge";
-import { Eye, RotateCw, Compass, Maximize2, Package, AlertOctagon, Activity, Radio, Sparkles, X, Minimize2 } from "lucide-react";
+import { Eye, RotateCw, Compass, Maximize2, Package, Users, Activity, Sparkles, X, Minimize2, CheckCircle2 } from "lucide-react";
 
 /* ── Interfaces ── */
 interface MachineState {
@@ -36,19 +36,56 @@ interface WaferPod {
   status: "healthy" | "warning" | "critical";
 }
 
+interface WorkerWaypoint {
+  x: number;
+  z: number;
+  action?: "pickup" | "drop" | "inspect" | "walk";
+  targetMachine?: string;
+  dwellTime?: number;
+}
+
+interface CleanroomWorker {
+  id: string;
+  name: string;
+  role: string;
+  group: THREE.Group;
+  torsoGroup: THREE.Group;
+  leftLeg: THREE.Group;
+  rightLeg: THREE.Group;
+  leftArm: THREE.Group;
+  rightArm: THREE.Group;
+  carriedFoup: THREE.Group;
+  tabletMesh?: THREE.Mesh;
+  waypoints: WorkerWaypoint[];
+  currentWaypointIdx: number;
+  walkCycle: number;
+  state: "walking" | "interacting";
+  stateTimer: number;
+  hasFoup: boolean;
+  speed: number;
+}
+
+interface CleanroomAMR {
+  group: THREE.Group;
+  beacon: THREE.Mesh;
+  waypoints: { x: number; z: number }[];
+  currentWaypointIdx: number;
+  speed: number;
+}
+
 /* ── Cleanroom Bay Stage Metadata ── */
 const TOWER_COORDS: Record<
   string,
   { x: number; z: number; color: number; label: string; stage: string; bay: string }
 > = {
-  "INTAKE": { x: -28, z: -4, color: 0x38BDF8, label: "DATA INTAKE", stage: "Ingestion Hub", bay: "BAY-00" },
-  "DEP-01": { x: -18, z: -4, color: 0x10B981, label: "DEP-01", stage: "CVD Deposition", bay: "BAY-01" },
-  "LITHO-01": { x: -8, z: -4, color: 0x818CF8, label: "LITHO-01", stage: "EUV Photolithography", bay: "BAY-02" },
-  "ETCH-01": { x: 3, z: -9, color: 0xF43F5E, label: "ETCH-01", stage: "Plasma Etch Chamber A", bay: "BAY-03A" },
-  "ETCH-02": { x: 3, z: 1, color: 0xFB7185, label: "ETCH-02", stage: "Plasma Etch Chamber B", bay: "BAY-03B" },
-  "CMP-01": { x: 14, z: -4, color: 0xA78BFA, label: "CMP-01", stage: "Chemical Planarization", bay: "BAY-04" },
-  "CLEAN-01": { x: 24, z: -4, color: 0x06B6D4, label: "CLEAN-01", stage: "Wet Clean & Scrub", bay: "BAY-05" },
-  "AI-CORE": { x: 3, z: 14, color: 0xFBBF24, label: "ARGUS CORE", stage: "Digital Twin Brain", bay: "AI-HUB" },
+  "INTAKE": { x: -28, z: -4, color: 0x0284C7, label: "DATA INTAKE", stage: "Ingestion Hub", bay: "BAY-00" },
+  "DEP-01": { x: -18, z: -4, color: 0x059669, label: "DEP-01", stage: "CVD Deposition", bay: "BAY-01" },
+  "LITHO-01": { x: -8, z: -4, color: 0x6366F1, label: "LITHO-01", stage: "EUV Photolithography", bay: "BAY-02" },
+  "ETCH-01": { x: 3, z: -9, color: 0xE11D48, label: "ETCH-01", stage: "Plasma Etch Chamber A", bay: "BAY-03A" },
+  "ETCH-02": { x: 3, z: 1, color: 0xF43F5E, label: "ETCH-02", stage: "Plasma Etch Chamber B", bay: "BAY-03B" },
+  "CMP-01": { x: 14, z: -4, color: 0x8B5CF6, label: "CMP-01", stage: "Chemical Planarization", bay: "BAY-04" },
+  "CLEAN-01": { x: 24, z: -4, color: 0x0891B2, label: "CLEAN-01", stage: "Wet Clean & Scrub", bay: "BAY-05" },
+  "AI-CORE": { x: 3, z: 14, color: 0xD97706, label: "ARGUS CORE", stage: "Digital Twin Brain", bay: "AI-HUB" },
 };
 
 const VALID_TOOLS = ["DEP-01", "LITHO-01", "ETCH-01", "ETCH-02", "CMP-01", "CLEAN-01"];
@@ -63,6 +100,264 @@ const OHT_ROUTES = [
   ["CMP-01", "CLEAN-01"],
   ["CLEAN-01", "AI-CORE"],
 ];
+
+/* ── 3D Asset Creators for Cleanroom Personnel & Robots ── */
+function createCleanroomWorker(suitColor = 0xFFFFFF, stripeColor = 0x0284C7, hasTablet = false) {
+  const group = new THREE.Group();
+
+  const torsoGroup = new THREE.Group();
+  torsoGroup.position.y = 1.35;
+  group.add(torsoGroup);
+
+  const suitMat = new THREE.MeshStandardMaterial({
+    color: suitColor,
+    roughness: 0.35,
+    metalness: 0.1,
+  });
+
+  const stripeMat = new THREE.MeshStandardMaterial({
+    color: stripeColor,
+    roughness: 0.3,
+    metalness: 0.2,
+  });
+
+  // Torso (bunny suit body)
+  const torsoGeo = new THREE.BoxGeometry(0.72, 0.9, 0.44);
+  const torso = new THREE.Mesh(torsoGeo, suitMat);
+  torso.castShadow = true;
+  torsoGroup.add(torso);
+
+  // Cleanroom badge stripe
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.16, 0.46), stripeMat);
+  stripe.position.y = 0.16;
+  torsoGroup.add(stripe);
+
+  // Helmet / Hood
+  const headGeo = new THREE.SphereGeometry(0.32, 16, 16);
+  const head = new THREE.Mesh(headGeo, suitMat);
+  head.position.y = 0.72;
+  head.castShadow = true;
+  torsoGroup.add(head);
+
+  // Tinted reflective cleanroom face shield / visor
+  const visorGeo = new THREE.SphereGeometry(0.24, 16, 16, 0, Math.PI, 0, Math.PI * 0.65);
+  const visorMat = new THREE.MeshStandardMaterial({
+    color: 0x0284C7,
+    roughness: 0.08,
+    metalness: 0.92,
+    emissive: 0x0369A1,
+    emissiveIntensity: 0.25,
+  });
+  const visor = new THREE.Mesh(visorGeo, visorMat);
+  visor.rotation.x = -Math.PI / 8;
+  visor.position.set(0, 0.72, 0.15);
+  torsoGroup.add(visor);
+
+  // PAPR Respirator / Air Pack on back
+  const packGeo = new THREE.BoxGeometry(0.44, 0.52, 0.22);
+  const packMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.6 });
+  const pack = new THREE.Mesh(packGeo, packMat);
+  pack.position.set(0, 0.08, -0.32);
+  pack.castShadow = true;
+  torsoGroup.add(pack);
+
+  // Green status LED on air pack
+  const led = new THREE.Mesh(
+    new THREE.SphereGeometry(0.04, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0x10B981 })
+  );
+  led.position.set(0.12, 0.26, -0.44);
+  torsoGroup.add(led);
+
+  // Left Leg
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.2, 0.9, 0);
+  group.add(leftLeg);
+
+  const legGeo = new THREE.BoxGeometry(0.26, 0.85, 0.26);
+  const lLegMesh = new THREE.Mesh(legGeo, suitMat);
+  lLegMesh.position.y = -0.42;
+  lLegMesh.castShadow = true;
+  leftLeg.add(lLegMesh);
+
+  const bootGeo = new THREE.BoxGeometry(0.28, 0.18, 0.38);
+  const bootMat = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.6 });
+  const lBoot = new THREE.Mesh(bootGeo, bootMat);
+  lBoot.position.set(0, -0.82, 0.05);
+  lBoot.castShadow = true;
+  leftLeg.add(lBoot);
+
+  // Right Leg
+  const rightLeg = new THREE.Group();
+  rightLeg.position.set(0.2, 0.9, 0);
+  group.add(rightLeg);
+
+  const rLegMesh = new THREE.Mesh(legGeo, suitMat);
+  rLegMesh.position.y = -0.42;
+  rLegMesh.castShadow = true;
+  rightLeg.add(rLegMesh);
+
+  const rBoot = new THREE.Mesh(bootGeo, bootMat);
+  rBoot.position.set(0, -0.82, 0.05);
+  rBoot.castShadow = true;
+  rightLeg.add(rBoot);
+
+  // Left Arm
+  const leftArm = new THREE.Group();
+  leftArm.position.set(-0.48, 0.35, 0);
+  torsoGroup.add(leftArm);
+
+  const armGeo = new THREE.BoxGeometry(0.18, 0.72, 0.2);
+  const lArmMesh = new THREE.Mesh(armGeo, suitMat);
+  lArmMesh.position.y = -0.32;
+  lArmMesh.castShadow = true;
+  leftArm.add(lArmMesh);
+
+  // Right Arm
+  const rightArm = new THREE.Group();
+  rightArm.position.set(0.48, 0.35, 0);
+  torsoGroup.add(rightArm);
+
+  const rArmMesh = new THREE.Mesh(armGeo, suitMat);
+  rArmMesh.position.y = -0.32;
+  rArmMesh.castShadow = true;
+  rightArm.add(rArmMesh);
+
+  // Carried Item: Wafer FOUP Pod (front opening unified pod)
+  const carriedFoup = new THREE.Group();
+  carriedFoup.position.set(0, -0.05, 0.44);
+
+  const foupShell = new THREE.Mesh(
+    new THREE.BoxGeometry(0.56, 0.42, 0.44),
+    new THREE.MeshStandardMaterial({
+      color: 0xE0F2FE,
+      roughness: 0.15,
+      metalness: 0.3,
+      transparent: true,
+      opacity: 0.9,
+    })
+  );
+  foupShell.castShadow = true;
+  carriedFoup.add(foupShell);
+
+  // Inner Silicon Wafer Stack
+  for (let w = -2; w <= 2; w++) {
+    const waferDisc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.17, 0.17, 0.015, 16),
+      new THREE.MeshBasicMaterial({ color: 0x38BDF8 })
+    );
+    waferDisc.rotation.x = Math.PI / 2;
+    waferDisc.position.y = w * 0.06;
+    carriedFoup.add(waferDisc);
+  }
+
+  // Handle
+  const handle = new THREE.Mesh(
+    new THREE.BoxGeometry(0.24, 0.06, 0.08),
+    new THREE.MeshStandardMaterial({ color: 0x0284C7 })
+  );
+  handle.position.set(0, 0.23, 0);
+  carriedFoup.add(handle);
+
+  torsoGroup.add(carriedFoup);
+
+  // Optional Diagnostic Tablet for Inspector
+  let tabletMesh: THREE.Mesh | undefined;
+  if (hasTablet) {
+    carriedFoup.visible = false;
+    const tabGeo = new THREE.BoxGeometry(0.42, 0.03, 0.32);
+    const tabMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.8, roughness: 0.2 });
+    tabletMesh = new THREE.Mesh(tabGeo, tabMat);
+    tabletMesh.position.set(0, -0.05, 0.35);
+
+    const screenGeo = new THREE.PlaneGeometry(0.38, 0.28);
+    const screenMat = new THREE.MeshBasicMaterial({ color: 0x38BDF8 });
+    const screen = new THREE.Mesh(screenGeo, screenMat);
+    screen.rotation.x = -Math.PI / 2;
+    screen.position.y = 0.02;
+    tabletMesh.add(screen);
+
+    torsoGroup.add(tabletMesh);
+  }
+
+  return { group, torsoGroup, leftLeg, rightLeg, leftArm, rightArm, carriedFoup, tabletMesh };
+}
+
+function createCleanroomAMR() {
+  const group = new THREE.Group();
+
+  // Heavy AGV Chassis
+  const chassisGeo = new THREE.BoxGeometry(1.8, 0.44, 1.2);
+  const chassisMat = new THREE.MeshStandardMaterial({
+    color: 0x1E293B,
+    metalness: 0.85,
+    roughness: 0.25,
+  });
+  const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+  chassis.position.y = 0.32;
+  chassis.castShadow = true;
+  group.add(chassis);
+
+  // Safety Bumper Yellow Trims
+  const bumperGeo = new THREE.BoxGeometry(1.86, 0.14, 1.26);
+  const bumperMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.4 });
+  const bumper = new THREE.Mesh(bumperGeo, bumperMat);
+  bumper.position.y = 0.18;
+  group.add(bumper);
+
+  // Wheels
+  for (const [wx, wz] of [[-0.65, -0.6], [-0.65, 0.6], [0.65, -0.6], [0.65, 0.6]]) {
+    const wheel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.16, 0.12, 16),
+      new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.8 })
+    );
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(wx, 0.16, wz);
+    group.add(wheel);
+  }
+
+  // Dual Wafer FOUP pods on cargo bed
+  for (const fx of [-0.4, 0.4]) {
+    const pod = new THREE.Mesh(
+      new THREE.BoxGeometry(0.56, 0.45, 0.56),
+      new THREE.MeshStandardMaterial({
+        color: 0xE0F2FE,
+        roughness: 0.2,
+        metalness: 0.3,
+        transparent: true,
+        opacity: 0.9,
+      })
+    );
+    pod.position.set(fx, 0.78, 0);
+    pod.castShadow = true;
+    group.add(pod);
+
+    const podDisc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.2, 0.02, 16),
+      new THREE.MeshBasicMaterial({ color: 0x38BDF8 })
+    );
+    podDisc.position.set(fx, 0.78, 0);
+    group.add(podDisc);
+  }
+
+  // LiDAR Optical Scanner Puck
+  const lidar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 0.16, 16),
+    new THREE.MeshStandardMaterial({ color: 0x0284C7, metalness: 0.9 })
+  );
+  lidar.position.set(0.75, 0.62, 0);
+  group.add(lidar);
+
+  // Amber Safety Beacon
+  const beacon = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, 0.16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xF59E0B })
+  );
+  beacon.position.set(-0.7, 0.62, 0);
+  group.add(beacon);
+
+  return { group, beacon };
+}
 
 export function FabCity3D({
   machines,
@@ -92,9 +387,10 @@ export function FabCity3D({
   const radarRings = useRef<Map<string, THREE.Group>>(new Map());
   const plasmaViewports = useRef<Map<string, THREE.Mesh>>(new Map());
   const andonTowers = useRef<Map<string, { red: THREE.Mesh; amber: THREE.Mesh; green: THREE.Mesh }>>(new Map());
-  const flashMap = useRef<Map<string, number>>(new Map());
   const ohtCurves = useRef<Map<string, THREE.CatmullRomCurve3>>(new Map());
   const waferPods = useRef<WaferPod[]>([]);
+  const workersRef = useRef<CleanroomWorker[]>([]);
+  const amrRef = useRef<CleanroomAMR | null>(null);
   const shockwaves = useRef<{ mesh: THREE.Mesh; progress: number }[]>([]);
   const selReticleRef = useRef<THREE.Group | null>(null);
   const targetCamPos = useRef<THREE.Vector3 | null>(null);
@@ -115,8 +411,9 @@ export function FabCity3D({
     const H = typeof height === "number" ? height : el.clientHeight || 540;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060913);
-    scene.fog = new THREE.FogExp2(0x060913, 0.010);
+    // Bright, pristine semiconductor cleanroom environment
+    scene.background = new THREE.Color(0xF0F4F8);
+    scene.fog = new THREE.FogExp2(0xF0F4F8, 0.007);
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.5, 1000);
@@ -129,7 +426,7 @@ export function FabCity3D({
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.15;
     el.replaceChildren(renderer.domElement);
 
     const ctrl = new OrbitControls(camera, renderer.domElement);
@@ -141,36 +438,41 @@ export function FabCity3D({
     ctrl.target.set(0, 3.5, 0);
     controlsRef.current = ctrl;
 
-    /* ── High-Tech Lighting ── */
-    scene.add(new THREE.AmbientLight(0x94A3B8, 0.45));
+    /* ── Bright High-Spec Cleanroom Illumination ── */
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 1.25));
 
-    const keySun = new THREE.DirectionalLight(0xF8FAFC, 1.8);
-    keySun.position.set(25, 55, 35);
+    const keySun = new THREE.DirectionalLight(0xF8FAFC, 1.55);
+    keySun.position.set(30, 60, 40);
     keySun.castShadow = true;
     keySun.shadow.mapSize.set(2048, 2048);
     keySun.shadow.camera.near = 10;
-    keySun.shadow.camera.far = 150;
-    keySun.shadow.camera.left = -45;
-    keySun.shadow.camera.right = 45;
-    keySun.shadow.camera.top = 45;
-    keySun.shadow.camera.bottom = -45;
+    keySun.shadow.camera.far = 160;
+    keySun.shadow.camera.left = -50;
+    keySun.shadow.camera.right = 50;
+    keySun.shadow.camera.top = 50;
+    keySun.shadow.camera.bottom = -50;
     keySun.shadow.bias = -0.0005;
     scene.add(keySun);
 
-    const rimLightBlue = new THREE.DirectionalLight(0x38BDF8, 0.85);
-    rimLightBlue.position.set(-45, 22, -25);
-    scene.add(rimLightBlue);
+    // Cyan & soft violet cleanroom luminaire fills
+    const fillLight1 = new THREE.DirectionalLight(0xBAE6FD, 0.55);
+    fillLight1.position.set(-45, 25, -25);
+    scene.add(fillLight1);
 
-    const rimLightViolet = new THREE.DirectionalLight(0xC084FC, 0.55);
-    rimLightViolet.position.set(45, 18, 30);
-    scene.add(rimLightViolet);
+    const fillLight2 = new THREE.DirectionalLight(0xDDD6FE, 0.45);
+    fillLight2.position.set(45, 20, 30);
+    scene.add(fillLight2);
 
-    /* ── High-Gloss Cleanroom Floor with Tile Matrix & Bay Guides ── */
-    const floorGeo = new THREE.PlaneGeometry(170, 170);
+    const topFill = new THREE.DirectionalLight(0xFFFFFF, 0.4);
+    topFill.position.set(0, 50, 0);
+    scene.add(topFill);
+
+    /* ── High-Gloss Anti-Static Cleanroom Epoxy Floor ── */
+    const floorGeo = new THREE.PlaneGeometry(180, 180);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x080E1A,
-      roughness: 0.28,
-      metalness: 0.65,
+      color: 0xF8FAFC,
+      roughness: 0.2,
+      metalness: 0.18,
     });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
@@ -178,42 +480,52 @@ export function FabCity3D({
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Fine cleanroom grid
-    const mainGrid = new THREE.GridHelper(140, 70, 0x1E3A5F, 0x0D1F35);
+    // Cleanroom fine grid (silver/slate on bright floor)
+    const mainGrid = new THREE.GridHelper(160, 80, 0x94A3B8, 0xE2E8F0);
     mainGrid.position.y = 0.01;
     scene.add(mainGrid);
 
-    // Cleanroom Yellow Safety Corridor lines
-    const laneMat = new THREE.MeshBasicMaterial({ color: 0xF59E0B, transparent: true, opacity: 0.22 });
-    const laneGeo = new THREE.PlaneGeometry(68, 0.25);
+    // Cleanroom Safety Corridor Lanes (High Visibility Yellow)
+    const laneMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.4 });
+    const laneGeo = new THREE.PlaneGeometry(74, 0.35);
+
     const lane1 = new THREE.Mesh(laneGeo, laneMat);
     lane1.rotation.x = -Math.PI / 2;
-    lane1.position.set(-2, 0.03, -13);
+    lane1.position.set(-1, 0.03, -13);
     scene.add(lane1);
 
     const lane2 = new THREE.Mesh(laneGeo, laneMat);
     lane2.rotation.x = -Math.PI / 2;
-    lane2.position.set(-2, 0.03, 6);
+    lane2.position.set(-1, 0.03, 6);
     scene.add(lane2);
 
-    /* ── Ambient Airborne Cleanroom Particles (Laminar Flow) ── */
-    const particleCount = 280;
+    // Central Pedestrian Crosswalk Stripe Hashes
+    const crossGeo = new THREE.PlaneGeometry(0.4, 3.5);
+    const crossMat = new THREE.MeshBasicMaterial({ color: 0xFBBF24, transparent: true, opacity: 0.55 });
+    for (let cx = -26; cx <= 24; cx += 5) {
+      const cross = new THREE.Mesh(crossGeo, crossMat);
+      cross.rotation.x = -Math.PI / 2;
+      cross.position.set(cx, 0.035, 6);
+      scene.add(cross);
+    }
+
+    /* ── Cleanroom Air Flow Particles (HEPA Downflow) ── */
+    const particleCount = 200;
     const pPositions = new Float32Array(particleCount * 3);
     const pVelocities = new Float32Array(particleCount);
     for (let i = 0; i < particleCount; i++) {
       pPositions[i * 3] = (Math.random() - 0.5) * 80;
       pPositions[i * 3 + 1] = Math.random() * 26 + 1;
       pPositions[i * 3 + 2] = (Math.random() - 0.5) * 45;
-      pVelocities[i] = 0.015 + Math.random() * 0.02;
+      pVelocities[i] = 0.02 + Math.random() * 0.025;
     }
     const pGeo = new THREE.BufferGeometry();
     pGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
     const pMat = new THREE.PointsMaterial({
-      color: 0x93C5FD,
-      size: 0.45,
+      color: 0x38BDF8,
+      size: 0.35,
       transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
+      opacity: 0.4,
     });
     const particleSystem = new THREE.Points(pGeo, pMat);
     scene.add(particleSystem);
@@ -222,14 +534,14 @@ export function FabCity3D({
     const selReticle = new THREE.Group();
     const selHex = new THREE.Mesh(
       new THREE.RingGeometry(4.3, 4.8, 6),
-      new THREE.MeshBasicMaterial({ color: 0x38BDF8, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
+      new THREE.MeshBasicMaterial({ color: 0x0284C7, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
     );
     selHex.rotation.x = -Math.PI / 2;
     selReticle.add(selHex);
 
     const selCornerGeo = new THREE.RingGeometry(5.2, 5.5, 32, 1, 0, Math.PI / 3);
     for (let i = 0; i < 4; i++) {
-      const corner = new THREE.Mesh(selCornerGeo, new THREE.MeshBasicMaterial({ color: 0x38BDF8, side: THREE.DoubleSide }));
+      const corner = new THREE.Mesh(selCornerGeo, new THREE.MeshBasicMaterial({ color: 0x0284C7, side: THREE.DoubleSide }));
       corner.rotation.x = -Math.PI / 2;
       corner.rotation.z = (i * Math.PI) / 2;
       selReticle.add(corner);
@@ -252,8 +564,8 @@ export function FabCity3D({
       canvas.height = 110;
       const ctx = canvas.getContext("2d")!;
 
-      // Glass pill background
-      ctx.fillStyle = "rgba(10, 16, 28, 0.88)";
+      // Glass pill background with deep slate contrast
+      ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
       ctx.beginPath();
       ctx.roundRect(6, 6, 428, 98, 20);
       ctx.fill();
@@ -261,7 +573,7 @@ export function FabCity3D({
       // Glowing border
       const hex = "#" + accentColor.toString(16).padStart(6, "0");
       ctx.strokeStyle = hex;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.roundRect(6, 6, 428, 98, 20);
       ctx.stroke();
@@ -297,20 +609,20 @@ export function FabCity3D({
       const isCore = id === "AI-CORE";
       const isIntake = id === "INTAKE";
 
-      /* 1. Holographic Floor Radar Ring */
+      /* 1. Floor Radar Ring */
       const radarGroup = new THREE.Group();
       radarGroup.position.y = 0.08;
 
       const radarBase = new THREE.Mesh(
         new THREE.RingGeometry(3.6, 3.85, 48),
-        new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide, transparent: true, opacity: 0.65 })
+        new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide, transparent: true, opacity: 0.75 })
       );
       radarBase.rotation.x = -Math.PI / 2;
       radarGroup.add(radarBase);
 
       const radarTick = new THREE.Mesh(
         new THREE.RingGeometry(3.0, 3.4, 48, 1, 0, Math.PI * 0.4),
-        new THREE.MeshBasicMaterial({ color: 0xF8FAFC, side: THREE.DoubleSide, transparent: true, opacity: 0.75 })
+        new THREE.MeshBasicMaterial({ color: 0x0284C7, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
       );
       radarTick.rotation.x = -Math.PI / 2;
       radarGroup.add(radarTick);
@@ -318,18 +630,18 @@ export function FabCity3D({
       toolGroup.add(radarGroup);
       radarRings.current.set(id, radarGroup);
 
-      /* 2. Main Equipment Body (Heavy Cleanroom Chassis) */
+      /* 2. Main Equipment Body (Sleek Cleanroom Slate/Titanium Chassis) */
       const baseWidth = isCore ? 6.2 : 5.2;
       const baseHeight = isCore ? 4.5 : 3.4;
       const baseDepth = isCore ? 6.2 : 4.8;
 
       const bodyGeo = new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth);
       const bodyMat = new THREE.MeshStandardMaterial({
-        color: 0x111827,
-        metalness: 0.85,
+        color: 0x1E293B,
+        metalness: 0.82,
         roughness: 0.22,
-        emissive: 0x080D1A,
-        emissiveIntensity: 0.4,
+        emissive: 0x0F172A,
+        emissiveIntensity: 0.2,
       });
       const body = new THREE.Mesh(bodyGeo, bodyMat);
       body.position.y = baseHeight / 2 + 0.15;
@@ -340,39 +652,39 @@ export function FabCity3D({
 
       // Aluminum Bevel Skirt
       const skirtGeo = new THREE.BoxGeometry(baseWidth + 0.35, 0.3, baseDepth + 0.35);
-      const skirtMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.2 });
+      const skirtMat = new THREE.MeshStandardMaterial({ color: 0x64748B, metalness: 0.88, roughness: 0.2 });
       const skirt = new THREE.Mesh(skirtGeo, skirtMat);
       skirt.position.y = 0.15;
       toolGroup.add(skirt);
 
-      // Front FOUP Wafer Load Port
+      // Front FOUP Wafer Load Port (where workers & AMRs drop/pick up wafer pods!)
       if (!isCore && !isIntake) {
-        const foupGeo = new THREE.BoxGeometry(1.9, 1.3, 1.1);
-        const foupMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.7, roughness: 0.3 });
+        const foupGeo = new THREE.BoxGeometry(2.0, 1.3, 1.2);
+        const foupMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.75, roughness: 0.25 });
         const foup = new THREE.Mesh(foupGeo, foupMat);
         foup.position.set(0, 1.4, baseDepth / 2 + 0.45);
         foup.castShadow = true;
         toolGroup.add(foup);
 
-        // Wafer slot glowing line
-        const slotGeo = new THREE.BoxGeometry(1.4, 0.12, 0.05);
+        // Wafer slot glowing entrance line
+        const slotGeo = new THREE.BoxGeometry(1.4, 0.14, 0.06);
         const slotMat = new THREE.MeshBasicMaterial({ color: 0x38BDF8 });
         const slot = new THREE.Mesh(slotGeo, slotMat);
-        slot.position.set(0, 1.4, baseDepth / 2 + 1.02);
+        slot.position.set(0, 1.4, baseDepth / 2 + 1.05);
         toolGroup.add(slot);
       }
 
       /* 3. Vacuum Process Chamber & Inspection Viewport */
       let chamberTopY = baseHeight + 0.15;
       if (!isCore) {
-        // Cylindrical High-Vacuum Reaction Chamber
+        // Polished Stainless Steel Reaction Chamber
         const chamberRadius = 1.9;
         const chamberH = isIntake ? 2.5 : 3.8;
         const chamberGeo = new THREE.CylinderGeometry(chamberRadius, chamberRadius, chamberH, 28);
         const chamberMat = new THREE.MeshStandardMaterial({
-          color: 0x64748B,
-          metalness: 0.92,
-          roughness: 0.18,
+          color: 0xCBD5E1,
+          metalness: 0.94,
+          roughness: 0.15,
         });
         const chamber = new THREE.Mesh(chamberGeo, chamberMat);
         chamber.position.y = chamberTopY + chamberH / 2;
@@ -388,10 +700,10 @@ export function FabCity3D({
         viewportRim.position.set(0, chamberTopY + chamberH / 2, chamberRadius + 0.12);
         toolGroup.add(viewportRim);
 
-        // Internal Glowing Plasma Core
+        // Glowing Plasma Core
         const plasmaCore = new THREE.Mesh(
           new THREE.SphereGeometry(0.65, 16, 16),
-          new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85 })
+          new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.88 })
         );
         plasmaCore.position.set(0, chamberTopY + chamberH / 2, chamberRadius - 0.05);
         toolGroup.add(plasmaCore);
@@ -399,10 +711,10 @@ export function FabCity3D({
 
         chamberTopY += chamberH;
       } else {
-        // ARGUS AI CITADEL Quantum Core Architecture
+        // ARGUS AI Citadel
         const coreChamber = new THREE.Mesh(
           new THREE.CylinderGeometry(2.4, 2.8, 9.5, 6),
-          new THREE.MeshStandardMaterial({ color: 0x0B132B, metalness: 0.95, roughness: 0.1, emissive: col, emissiveIntensity: 0.18 })
+          new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.92, roughness: 0.12, emissive: col, emissiveIntensity: 0.25 })
         );
         coreChamber.position.y = chamberTopY + 4.75;
         coreChamber.castShadow = true;
@@ -410,7 +722,7 @@ export function FabCity3D({
 
         const ringFloat1 = new THREE.Mesh(
           new THREE.TorusGeometry(3.6, 0.12, 12, 48),
-          new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.8 })
+          new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85 })
         );
         ringFloat1.rotation.x = Math.PI / 2;
         ringFloat1.position.y = chamberTopY + 4.8;
@@ -421,10 +733,9 @@ export function FabCity3D({
 
       /* 4. Machine Subsystem Variations */
       if (id === "LITHO-01") {
-        // DUV/EUV Lens Column & Stepper Turret
         const opticsCol = new THREE.Mesh(
           new THREE.CylinderGeometry(0.9, 1.4, 3.6, 24),
-          new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.92, roughness: 0.12 })
+          new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.92, roughness: 0.12 })
         );
         opticsCol.position.y = chamberTopY + 1.8;
         toolGroup.add(opticsCol);
@@ -438,10 +749,9 @@ export function FabCity3D({
         toolGroup.add(lensGlow);
         chamberTopY += 3.6;
       } else if (id.startsWith("ETCH")) {
-        // RF Generator Matching Box & Coils
         const rfBox = new THREE.Mesh(
           new THREE.BoxGeometry(2.4, 1.4, 2.4),
-          new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.85, roughness: 0.25 })
+          new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85, roughness: 0.25 })
         );
         rfBox.position.y = chamberTopY + 0.7;
         toolGroup.add(rfBox);
@@ -507,20 +817,20 @@ export function FabCity3D({
       // Heavy rail spine
       const railGeo = new THREE.TubeGeometry(curve, 32, 0.16, 8, false);
       const railMat = new THREE.MeshStandardMaterial({
-        color: 0x1E293B,
-        metalness: 0.9,
+        color: 0x334155,
+        metalness: 0.85,
         roughness: 0.2,
       });
       ohtRailGroup.add(new THREE.Mesh(railGeo, railMat));
 
       // Luminous blue monorail guide beam
       const glowGeo = new THREE.TubeGeometry(curve, 32, 0.05, 6, false);
-      const glowMat = new THREE.MeshBasicMaterial({ color: 0x38BDF8, transparent: true, opacity: 0.75 });
+      const glowMat = new THREE.MeshBasicMaterial({ color: 0x0284C7, transparent: true, opacity: 0.85 });
       ohtRailGroup.add(new THREE.Mesh(glowGeo, glowMat));
 
       // Support drop trusses to ground
       const trussGeo = new THREE.CylinderGeometry(0.08, 0.08, ohtHeight, 8);
-      const trussMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+      const trussMat = new THREE.MeshStandardMaterial({ color: 0x64748B, metalness: 0.8, roughness: 0.3 });
       const tMesh = new THREE.Mesh(trussGeo, trussMat);
       tMesh.position.set(fc.x, ohtHeight / 2, fc.z);
       ohtRailGroup.add(tMesh);
@@ -533,14 +843,12 @@ export function FabCity3D({
 
       const podGroup = new THREE.Group();
 
-      // Aerodynamic Cleanroom Carrier Pod
       const podBody = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 0.6, 0.9),
         new THREE.MeshStandardMaterial({ color: 0xF8FAFC, metalness: 0.3, roughness: 0.2 })
       );
       podGroup.add(podBody);
 
-      // Top Monorail Glider Claw
       const claw = new THREE.Mesh(
         new THREE.CylinderGeometry(0.2, 0.2, 0.4, 8),
         new THREE.MeshStandardMaterial({ color: 0x0F172A, metalness: 0.9, roughness: 0.1 })
@@ -548,7 +856,6 @@ export function FabCity3D({
       claw.position.y = 0.45;
       podGroup.add(claw);
 
-      // Silicon Wafer Disc (300mm Mirror Silicon)
       const wafer = new THREE.Mesh(
         new THREE.CylinderGeometry(0.48, 0.48, 0.04, 32),
         new THREE.MeshStandardMaterial({ color: 0x38BDF8, metalness: 0.95, roughness: 0.05 })
@@ -556,10 +863,9 @@ export function FabCity3D({
       wafer.position.y = -0.42;
       podGroup.add(wafer);
 
-      // Carrier Glow Aura
       const aura = new THREE.Mesh(
         new THREE.SphereGeometry(0.85, 12, 12),
-        new THREE.MeshBasicMaterial({ color: 0x38BDF8, transparent: true, opacity: 0.28 })
+        new THREE.MeshBasicMaterial({ color: 0x38BDF8, transparent: true, opacity: 0.32 })
       );
       podGroup.add(aura);
 
@@ -580,6 +886,121 @@ export function FabCity3D({
     for (let i = 0; i < 4; i++) {
       spawnPod(i * 0.24);
     }
+
+    /* ── Cleanroom Personnel & Mobile Transport Workers ── */
+    workersRef.current.forEach((w) => scene.remove(w.group));
+    workersRef.current = [];
+
+    // Worker 1: Chen (CVD to Litho to Etch Material Transfer)
+    const w1 = createCleanroomWorker(0xFAFAFA, 0x0284C7, false);
+    const worker1Waypoints: WorkerWaypoint[] = [
+      { x: -18, z: -1.5, action: "pickup", targetMachine: "DEP-01", dwellTime: 2.0 },
+      { x: -18, z: 5, action: "walk" },
+      { x: -8, z: 5, action: "walk" },
+      { x: -8, z: -1.5, action: "drop", targetMachine: "LITHO-01", dwellTime: 2.0 },
+      { x: -8, z: -1.5, action: "pickup", targetMachine: "LITHO-01", dwellTime: 1.8 },
+      { x: -8, z: 5, action: "walk" },
+      { x: 3, z: 5, action: "walk" },
+      { x: 3, z: -6.5, action: "drop", targetMachine: "ETCH-01", dwellTime: 2.0 },
+      { x: 3, z: 5, action: "walk" },
+      { x: -18, z: 5, action: "walk" },
+    ];
+    w1.group.position.set(-18, 0, -1.5);
+    scene.add(w1.group);
+    workersRef.current.push({
+      id: "TECH-01",
+      name: "Chen L.",
+      role: "Litho/Etch Transfer Specialist",
+      ...w1,
+      waypoints: worker1Waypoints,
+      currentWaypointIdx: 0,
+      walkCycle: 0,
+      state: "walking",
+      stateTimer: 0,
+      hasFoup: false,
+      speed: 0.065,
+    });
+
+    // Worker 2: Maya (Etch to Planarization to Wet Clean Runner)
+    const w2 = createCleanroomWorker(0xFAFAFA, 0xF59E0B, false);
+    const worker2Waypoints: WorkerWaypoint[] = [
+      { x: 3, z: 3.5, action: "pickup", targetMachine: "ETCH-02", dwellTime: 2.0 },
+      { x: 3, z: 6, action: "walk" },
+      { x: 14, z: 6, action: "walk" },
+      { x: 14, z: -1.5, action: "drop", targetMachine: "CMP-01", dwellTime: 2.0 },
+      { x: 14, z: -1.5, action: "pickup", targetMachine: "CMP-01", dwellTime: 1.8 },
+      { x: 14, z: 6, action: "walk" },
+      { x: 24, z: 6, action: "walk" },
+      { x: 24, z: -1.5, action: "drop", targetMachine: "CLEAN-01", dwellTime: 2.0 },
+      { x: 24, z: 6, action: "walk" },
+      { x: 3, z: 6, action: "walk" },
+    ];
+    w2.group.position.set(3, 0, 3.5);
+    scene.add(w2.group);
+    workersRef.current.push({
+      id: "TECH-02",
+      name: "Maya S.",
+      role: "CMP/Clean Bay Technician",
+      ...w2,
+      waypoints: worker2Waypoints,
+      currentWaypointIdx: 0,
+      walkCycle: 0,
+      state: "walking",
+      stateTimer: 0,
+      hasFoup: true,
+      speed: 0.062,
+    });
+
+    // Worker 3: Vance (Process QC Inspector with Diagnostic Tablet)
+    const w3 = createCleanroomWorker(0xFAFAFA, 0x10B981, true);
+    const worker3Waypoints: WorkerWaypoint[] = [
+      { x: -28, z: -1.5, action: "inspect", targetMachine: "INTAKE", dwellTime: 2.5 },
+      { x: -28, z: 5, action: "walk" },
+      { x: -18, z: 5, action: "walk" },
+      { x: -18, z: -1.5, action: "inspect", targetMachine: "DEP-01", dwellTime: 2.5 },
+      { x: -18, z: 5, action: "walk" },
+      { x: 3, z: 6, action: "walk" },
+      { x: 3, z: 10, action: "inspect", targetMachine: "AI-CORE", dwellTime: 3.0 },
+      { x: 3, z: 6, action: "walk" },
+      { x: 24, z: 6, action: "walk" },
+      { x: 24, z: -1.5, action: "inspect", targetMachine: "CLEAN-01", dwellTime: 2.5 },
+      { x: 24, z: 6, action: "walk" },
+      { x: -28, z: 5, action: "walk" },
+    ];
+    w3.group.position.set(-28, 0, -1.5);
+    scene.add(w3.group);
+    workersRef.current.push({
+      id: "TECH-03",
+      name: "Dr. Vance",
+      role: "Lead Metrology & Quality Inspector",
+      ...w3,
+      waypoints: worker3Waypoints,
+      currentWaypointIdx: 0,
+      walkCycle: 0,
+      state: "walking",
+      stateTimer: 0,
+      hasFoup: false,
+      speed: 0.058,
+    });
+
+    // Autonomous Mobile Robot (AMR-09 Wafer Transporter)
+    if (amrRef.current) scene.remove(amrRef.current.group);
+    const amr = createCleanroomAMR();
+    amr.group.position.set(-26, 0, 6);
+    scene.add(amr.group);
+    amrRef.current = {
+      ...amr,
+      waypoints: [
+        { x: -26, z: 6 },
+        { x: 3, z: 6 },
+        { x: 3, z: 10.5 },
+        { x: 3, z: 6 },
+        { x: 22, z: 6 },
+        { x: 3, z: 6 },
+      ],
+      currentWaypointIdx: 0,
+      speed: 0.05,
+    };
 
     /* ── Raycasting & Mouse Interaction ── */
     const raycaster = new THREE.Raycaster();
@@ -625,9 +1046,8 @@ export function FabCity3D({
         while (obj && obj.parent !== machinesContainer) obj = obj.parent;
         if (obj?.name && VALID_TOOLS.includes(obj.name)) {
           const cid = obj.name;
-          triggerShockwave(scene, TOWER_COORDS[cid]?.x ?? 0, TOWER_COORDS[cid]?.z ?? 0, TOWER_COORDS[cid]?.color ?? 0xFFFFFF);
+          triggerShockwave(scene, TOWER_COORDS[cid]?.x ?? 0, TOWER_COORDS[cid]?.z ?? 0, TOWER_COORDS[cid]?.color ?? 0x0284C7);
           if (selIdRef.current === cid) {
-            // Clicked already-selected tool: deselect & reset to overview
             onSelRef.current?.("");
             targetCamPos.current = new THREE.Vector3(0, 34, 48);
             targetCamLook.current = new THREE.Vector3(0, 3.8, 0);
@@ -638,7 +1058,6 @@ export function FabCity3D({
           return;
         }
       } else {
-        // Clicked outside / cleanroom floor: reset to factory overview!
         if (selIdRef.current) {
           onSelRef.current?.("");
           targetCamPos.current = new THREE.Vector3(0, 34, 48);
@@ -657,9 +1076,10 @@ export function FabCity3D({
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.1);
       const t = clock.getElapsedTime();
 
-      // Camera Smooth Orbit / Lerp Focus
+      // Camera Orbit / Lerp Focus
       ctrl.autoRotate = autoRotateRef.current;
       ctrl.autoRotateSpeed = 0.55;
 
@@ -673,7 +1093,7 @@ export function FabCity3D({
       }
       ctrl.update();
 
-      // Laminar Particle Drift
+      // Air Particles Drift
       const pAttr = particleSystem.geometry.attributes.position as THREE.BufferAttribute;
       const posArr = pAttr.array as Float32Array;
       for (let i = 0; i < particleCount; i++) {
@@ -684,17 +1104,17 @@ export function FabCity3D({
       }
       pAttr.needsUpdate = true;
 
-      // Animate Floor Radars & Plasma Viewports
-      radarRings.current.forEach((rg, id) => {
+      // Radar & Plasma Viewports
+      radarRings.current.forEach((rg) => {
         rg.rotation.y += 0.018;
       });
 
       plasmaViewports.current.forEach((pv, id) => {
-        const pulse = 1.0 + Math.sin(t * 6.0 + id.charCodeAt(0)) * 0.18;
+        const pulse = 1.0 + Math.sin(t * 6.0 + id.charCodeAt(0)) * 0.16;
         pv.scale.set(pulse, pulse, pulse);
       });
 
-      // Selection Reticle Spin & Position
+      // Selection Reticle Spin
       if (selReticleRef.current && selIdRef.current) {
         const curMeta = TOWER_COORDS[selIdRef.current];
         if (curMeta) {
@@ -703,7 +1123,129 @@ export function FabCity3D({
         }
       }
 
-      // Wafer Pods Overhead Monorail Traversal
+      /* ── Cleanroom Workers Walk & Load/Unload Automation ── */
+      workersRef.current.forEach((worker) => {
+        const targetWp = worker.waypoints[worker.currentWaypointIdx];
+        if (!targetWp) return;
+
+        if (worker.state === "walking") {
+          const dx = targetWp.x - worker.group.position.x;
+          const dz = targetWp.z - worker.group.position.z;
+          const dist = Math.hypot(dx, dz);
+
+          if (dist > 0.3) {
+            // Move towards waypoint
+            const moveStep = Math.min(dist, worker.speed * 60 * delta);
+            worker.group.position.x += (dx / dist) * moveStep;
+            worker.group.position.z += (dz / dist) * moveStep;
+
+            // Turn towards movement direction
+            const angle = Math.atan2(dx, dz);
+            worker.group.rotation.y = angle;
+
+            // Animate walking stride
+            worker.walkCycle += worker.speed * 20;
+            const swing = Math.sin(worker.walkCycle) * 0.45;
+            worker.leftLeg.rotation.x = swing;
+            worker.rightLeg.rotation.x = -swing;
+            worker.torsoGroup.position.y = 1.35 + Math.abs(Math.sin(worker.walkCycle * 2)) * 0.05;
+
+            // Arms animation
+            if (worker.hasFoup) {
+              worker.carriedFoup.visible = true;
+              worker.leftArm.rotation.x = -0.6 + Math.sin(worker.walkCycle) * 0.08;
+              worker.rightArm.rotation.x = -0.6 - Math.sin(worker.walkCycle) * 0.08;
+            } else if (worker.tabletMesh) {
+              worker.carriedFoup.visible = false;
+              worker.leftArm.rotation.x = -0.7;
+              worker.rightArm.rotation.x = -0.5;
+            } else {
+              worker.carriedFoup.visible = false;
+              worker.leftArm.rotation.x = -swing * 0.7;
+              worker.rightArm.rotation.x = swing * 0.7;
+            }
+          } else {
+            // Reached waypoint: check for action
+            if (targetWp.action === "pickup" || targetWp.action === "drop" || targetWp.action === "inspect") {
+              worker.state = "interacting";
+              worker.stateTimer = targetWp.dwellTime || 2.0;
+
+              // Face the tool load port (towards -z for main bays)
+              if (targetWp.targetMachine) {
+                const tm = TOWER_COORDS[targetWp.targetMachine];
+                if (tm) {
+                  worker.group.lookAt(tm.x, 0, tm.z);
+                }
+              }
+            } else {
+              // Plain waypoint: proceed immediately to next
+              worker.currentWaypointIdx = (worker.currentWaypointIdx + 1) % worker.waypoints.length;
+            }
+          }
+        } else if (worker.state === "interacting") {
+          worker.stateTimer -= delta;
+
+          // Idle breathing & gesture
+          worker.leftLeg.rotation.x = 0;
+          worker.rightLeg.rotation.x = 0;
+          worker.torsoGroup.position.y = 1.35 + Math.sin(t * 3.5) * 0.02;
+
+          if (targetWp.action === "pickup") {
+            // Reaching in to retrieve wafer pod
+            worker.leftArm.rotation.x = -0.75 + Math.sin(t * 4) * 0.08;
+            worker.rightArm.rotation.x = -0.75 + Math.sin(t * 4) * 0.08;
+            worker.carriedFoup.visible = true;
+            worker.hasFoup = true;
+          } else if (targetWp.action === "drop") {
+            // Docking wafer pod into machine load port
+            worker.leftArm.rotation.x = -0.85 + Math.sin(t * 4) * 0.08;
+            worker.rightArm.rotation.x = -0.85 + Math.sin(t * 4) * 0.08;
+            if (worker.stateTimer < 0.6) {
+              worker.carriedFoup.visible = false;
+              worker.hasFoup = false;
+            }
+          } else if (targetWp.action === "inspect") {
+            // Diagnostic scan tablet tilt
+            worker.leftArm.rotation.x = -0.7 + Math.sin(t * 2) * 0.05;
+            worker.rightArm.rotation.x = -0.6 - Math.sin(t * 2) * 0.05;
+          }
+
+          if (worker.stateTimer <= 0) {
+            // Finished interaction: trigger ripple at machine port and proceed
+            if (targetWp.targetMachine) {
+              const tm = TOWER_COORDS[targetWp.targetMachine];
+              if (tm) triggerShockwave(scene, tm.x, tm.z, tm.color);
+            }
+            worker.state = "walking";
+            worker.currentWaypointIdx = (worker.currentWaypointIdx + 1) % worker.waypoints.length;
+          }
+        }
+      });
+
+      /* ── Autonomous Mobile Robot (AMR) Navigation ── */
+      if (amrRef.current) {
+        const amr = amrRef.current;
+        const targetWp = amr.waypoints[amr.currentWaypointIdx];
+        if (targetWp) {
+          const dx = targetWp.x - amr.group.position.x;
+          const dz = targetWp.z - amr.group.position.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist > 0.4) {
+            const step = Math.min(dist, amr.speed * 60 * delta);
+            amr.group.position.x += (dx / dist) * step;
+            amr.group.position.z += (dz / dist) * step;
+            amr.group.rotation.y = Math.atan2(dx, dz);
+          } else {
+            amr.currentWaypointIdx = (amr.currentWaypointIdx + 1) % amr.waypoints.length;
+          }
+        }
+        // Blinking amber beacon
+        (amr.beacon.material as THREE.MeshBasicMaterial).color.setHex(
+          Math.sin(t * 10) > 0 ? 0xF59E0B : 0x78350F
+        );
+      }
+
+      /* ── Monorail Wafer Pods Traversal ── */
       const survivingPods: WaferPod[] = [];
       let flaggedPods = 0;
 
@@ -722,7 +1264,6 @@ export function FabCity3D({
           pod.currentStep++;
           pod.progress = 0.0;
 
-          // Check machine health at arrival station
           const arrivalMachine = machinesRef.current.find((m) => m.machine_id === toNode);
           if (arrivalMachine?.health === "critical" || arrivalMachine?.health === "interlocked") {
             pod.status = "critical";
@@ -772,8 +1313,8 @@ export function FabCity3D({
       // Dynamic spawn on new processed wafers
       const totalProcessed = machinesRef.current.reduce((acc, m) => acc + (m.records_processed || 0), 0);
       if (totalProcessed > prevRecordCount.current) {
-        const delta = Math.min(2, Math.max(1, totalProcessed - prevRecordCount.current));
-        for (let i = 0; i < delta; i++) spawnPod(0);
+        const deltaSpawn = Math.min(2, Math.max(1, totalProcessed - prevRecordCount.current));
+        for (let i = 0; i < deltaSpawn; i++) spawnPod(0);
         prevRecordCount.current = totalProcessed;
       }
 
@@ -797,6 +1338,8 @@ export function FabCity3D({
       el.removeEventListener("mousedown", onPointerDown);
       el.removeEventListener("mouseup", onPointerUp);
       waferPods.current.forEach((p) => scene.remove(p.group));
+      workersRef.current.forEach((w) => scene.remove(w.group));
+      if (amrRef.current) scene.remove(amrRef.current.group);
       renderer.dispose();
       scene.clear();
     };
@@ -872,7 +1415,6 @@ export function FabCity3D({
 
   const handleSelectTool = (id: string) => {
     if (selectedMachineId === id) {
-      // Toggle off when clicking the active tool chip
       resetToOverview();
       return;
     }
@@ -899,7 +1441,7 @@ export function FabCity3D({
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height, borderRadius: 28, overflow: "hidden", background: "#060913" }}>
+    <div style={{ position: "relative", width: "100%", height, borderRadius: 28, overflow: "hidden", background: "#F0F4F8" }}>
       <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
 
       {/* ── TIER 1: TOP NAVIGATION ROW (STATUS ON LEFT, CAMERA ON RIGHT) ── */}
@@ -922,12 +1464,12 @@ export function FabCity3D({
             display: "flex",
             alignItems: "center",
             gap: 8,
-            background: "rgba(10, 16, 28, 0.88)",
+            background: "rgba(15, 23, 42, 0.88)",
             backdropFilter: "blur(20px)",
             padding: "6px 14px",
             borderRadius: 9999,
             border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
             pointerEvents: "auto",
           }}
         >
@@ -941,6 +1483,11 @@ export function FabCity3D({
             <span><strong style={{ color: "#FFF" }}>{inTransit}</strong> Pods</span>
           </div>
           <div style={{ width: 1, height: 12, background: "rgba(255,255,255,0.15)", margin: "0 2px" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "#94A3B8" }}>
+            <Users size={12} style={{ color: "#10B981" }} />
+            <span><strong style={{ color: "#FFF" }}>3</strong> Techs <span style={{ opacity: 0.6 }}>•</span> <strong style={{ color: "#FFF" }}>1</strong> AMR</span>
+          </div>
+          <div style={{ width: 1, height: 12, background: "rgba(255,255,255,0.15)", margin: "0 2px" }} />
           <span style={{ fontSize: 10, color: flagged > 0 ? "#F59E0B" : "#10B981", fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
             {flagged > 0 ? `${flagged} Flagged` : "All Nominal"}
           </span>
@@ -952,12 +1499,12 @@ export function FabCity3D({
             display: "flex",
             alignItems: "center",
             gap: 4,
-            background: "rgba(10, 16, 28, 0.88)",
+            background: "rgba(15, 23, 42, 0.88)",
             backdropFilter: "blur(20px)",
             padding: "4px 8px",
             borderRadius: 9999,
             border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
             pointerEvents: "auto",
           }}
         >
@@ -1019,7 +1566,7 @@ export function FabCity3D({
         </div>
       </div>
 
-      {/* ── TIER 2: CLEANROOM STATIONS DOCK (DEDICATED ROW, ZERO OVERLAP) ── */}
+      {/* ── TIER 2: CLEANROOM STATIONS DOCK ── */}
       <div
         style={{
           position: "absolute",
@@ -1028,13 +1575,13 @@ export function FabCity3D({
           display: "flex",
           alignItems: "center",
           gap: 5,
-          background: "rgba(10, 16, 28, 0.88)",
+          background: "rgba(15, 23, 42, 0.88)",
           backdropFilter: "blur(20px)",
           padding: "4px 8px",
           borderRadius: 9999,
           border: "1px solid rgba(255,255,255,0.1)",
           zIndex: 10,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
           maxWidth: "calc(100% - 28px)",
           overflowX: "auto",
         }}
@@ -1074,7 +1621,7 @@ export function FabCity3D({
                 borderRadius: 9999,
                 cursor: "pointer",
                 border: isSel ? `1px solid ${sc}` : "1px solid transparent",
-                background: isSel ? "rgba(255,255,255,0.12)" : "transparent",
+                background: isSel ? "rgba(255,255,255,0.15)" : "transparent",
                 color: isSel ? "#FFF" : "#94A3B8",
                 display: "flex",
                 alignItems: "center",
@@ -1089,7 +1636,7 @@ export function FabCity3D({
           );
         })}
 
-        {/* RESET VIEW / ZOOM OUT BUTTON */}
+        {/* RESET VIEW BUTTON */}
         {selectedMachineId && (
           <button
             onClick={resetToOverview}
@@ -1120,7 +1667,7 @@ export function FabCity3D({
 
       {/* HOVER TOOLTIP */}
       {hoveredNode && TOWER_COORDS[hoveredNode] && (
-        <div style={{ position: "absolute", bottom: 16, left: 16, background: "rgba(10, 16, 28, 0.94)", backdropFilter: "blur(20px)", border: "1px solid rgba(56, 189, 248, 0.5)", padding: "9px 16px", borderRadius: 16, color: "#F8FAFC", fontSize: 12, fontFamily: "'JetBrains Mono', monospace", display: "flex", alignItems: "center", gap: 9, zIndex: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+        <div style={{ position: "absolute", bottom: 16, left: 16, background: "rgba(15, 23, 42, 0.94)", backdropFilter: "blur(20px)", border: "1px solid rgba(56, 189, 248, 0.5)", padding: "9px 16px", borderRadius: 16, color: "#F8FAFC", fontSize: 12, fontFamily: "'JetBrains Mono', monospace", display: "flex", alignItems: "center", gap: 9, zIndex: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.35)" }}>
           <Sparkles size={14} style={{ color: "#38BDF8" }} />
           <span>
             <strong style={{ color: "#FFF" }}>{TOWER_COORDS[hoveredNode].label}</strong>
@@ -1138,18 +1685,18 @@ export function FabCity3D({
             bottom: 16,
             right: 16,
             width: 330,
-            background: "rgba(10, 16, 28, 0.90)",
+            background: "rgba(15, 23, 42, 0.92)",
             backdropFilter: "blur(24px)",
             border: `1px solid ${selectedMachine.health === "critical" || selectedMachine.health === "interlocked"
                 ? "rgba(239,68,68,0.5)"
                 : selectedMachine.health === "warning"
                   ? "rgba(245,158,11,0.5)"
-                  : "rgba(255,255,255,0.12)"
+                  : "rgba(255,255,255,0.14)"
               }`,
             borderRadius: 24,
             padding: "16px 20px",
             color: "#F8FAFC",
-            boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.35)",
             zIndex: 10,
           }}
         >

@@ -321,7 +321,7 @@ export function FacilityView() {
         </div>
 
         {viewMode === "3d" ? (
-          <div className="rounded-3xl overflow-hidden border border-slate-900/60 shadow-xl bg-slate-950">
+          <div className="rounded-3xl overflow-hidden border border-slate-700/50 shadow-2xl bg-slate-900">
             <FabCity3D
               machines={facility.machines || []}
               selectedMachineId={selectedMachineId}
