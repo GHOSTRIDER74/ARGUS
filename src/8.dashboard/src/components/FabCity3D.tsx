@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { StatusBadge } from "./StatusBadge";
-import { Eye, RotateCw, Compass, Maximize2, Package, Users, Activity, Sparkles, X, Minimize2, CheckCircle2 } from "lucide-react";
+import { Eye, RotateCw, Compass, Maximize2, Package, Users, Activity, Sparkles, X, Minimize2, CheckCircle2, Play, Navigation } from "lucide-react";
 
 /* ── Interfaces ── */
 interface MachineState {
@@ -85,7 +85,7 @@ const TOWER_COORDS: Record<
   "ETCH-02": { x: 3, z: 1, color: 0xF43F5E, label: "ETCH-02", stage: "Plasma Etch Chamber B", bay: "BAY-03B" },
   "CMP-01": { x: 14, z: -4, color: 0x8B5CF6, label: "CMP-01", stage: "Chemical Planarization", bay: "BAY-04" },
   "CLEAN-01": { x: 24, z: -4, color: 0x0891B2, label: "CLEAN-01", stage: "Wet Clean & Scrub", bay: "BAY-05" },
-  "AI-CORE": { x: 3, z: 14, color: 0xD97706, label: "ARGUS CORE", stage: "Digital Twin Brain", bay: "AI-HUB" },
+  "AI-CORE": { x: 34, z: -4, color: 0x06B6D4, label: "ARGUS CORE", stage: "Digital Twin Brain", bay: "AI-HUB" },
 };
 
 const VALID_TOOLS = ["DEP-01", "LITHO-01", "ETCH-01", "ETCH-02", "CMP-01", "CLEAN-01"];
@@ -371,6 +371,20 @@ export function FabCity3D({
   const autoRotateRef = useRef(false);
   const [inTransit, setInTransit] = useState(0);
   const [flagged, setFlagged] = useState(0);
+  const [activeCamMode, setActiveCamMode] = useState<"iso" | "top" | "focus" | "tour" | "tech">("iso");
+  const camModeRef = useRef<"iso" | "top" | "focus" | "tour" | "tech">("iso");
+  const tourStepRef = useRef(0);
+  const tourTimerRef = useRef(0);
+  const TOUR_SEQUENCE = ["DEP-01", "LITHO-01", "ETCH-01", "ETCH-02", "CMP-01", "CLEAN-01", "AI-CORE"];
+
+  // Clickable entity tooltip state (workers, pods, AMR)
+  const [entityTooltip, setEntityTooltip] = useState<{
+    name: string;
+    role: string;
+    task: string;
+    type: "worker" | "pod" | "amr";
+    pos: { x: number; y: number };
+  } | null>(null);
 
   const machinesRef = useRef(machines);
   machinesRef.current = machines;
@@ -403,6 +417,22 @@ export function FabCity3D({
     targetCamPos.current = new THREE.Vector3(x + 10, 16, z + 18);
   };
 
+  const zoomCamera = (direction: "in" | "out") => {
+    if (!cameraRef.current || !controlsRef.current) return;
+    const camera = cameraRef.current;
+    const ctrl = controlsRef.current;
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    const step = direction === "in" ? 8 : -8;
+    const newPos = camera.position.clone().addScaledVector(forward, step);
+    // Clamp to distance limits
+    const dist = newPos.distanceTo(ctrl.target);
+    if (dist >= 5 && dist <= 200) {
+      targetCamPos.current = newPos;
+      targetCamLook.current = ctrl.target.clone();
+    }
+  };
+
   /* ── Initialize Three.js Scene ── */
   useEffect(() => {
     if (!containerRef.current) return;
@@ -431,10 +461,26 @@ export function FabCity3D({
 
     const ctrl = new OrbitControls(camera, renderer.domElement);
     ctrl.enableDamping = true;
-    ctrl.dampingFactor = 0.06;
+    ctrl.dampingFactor = 0.08;
     ctrl.maxPolarAngle = Math.PI / 2.05;
-    ctrl.minDistance = 12;
-    ctrl.maxDistance = 130;
+    ctrl.minPolarAngle = 0.1;
+    ctrl.minDistance = 5;
+    ctrl.maxDistance = 200;
+    ctrl.enablePan = true;
+    ctrl.panSpeed = 1.2;
+    ctrl.screenSpacePanning = true;
+    ctrl.zoomSpeed = 1.4;
+    ctrl.rotateSpeed = 0.7;
+    ctrl.enableZoom = true;
+    ctrl.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN,
+    };
+    ctrl.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_PAN,
+    };
     ctrl.target.set(0, 3.5, 0);
     controlsRef.current = ctrl;
 
@@ -466,6 +512,19 @@ export function FabCity3D({
     const topFill = new THREE.DirectionalLight(0xFFFFFF, 0.4);
     topFill.position.set(0, 50, 0);
     scene.add(topFill);
+
+    /* ── Photolithography UV-Safe Amber Lighting Zone (LITHO-01) ── */
+    const lithoAmberLight = new THREE.PointLight(0xF59E0B, 3.2, 18);
+    lithoAmberLight.position.set(-8, 9, -4);
+    scene.add(lithoAmberLight);
+
+    const lithoFloorGlow = new THREE.Mesh(
+      new THREE.RingGeometry(0.1, 7.2, 48),
+      new THREE.MeshBasicMaterial({ color: 0xF59E0B, transparent: true, opacity: 0.14, side: THREE.DoubleSide })
+    );
+    lithoFloorGlow.rotation.x = -Math.PI / 2;
+    lithoFloorGlow.position.set(-8, 0.02, -4);
+    scene.add(lithoFloorGlow);
 
     /* ── High-Gloss Anti-Static Cleanroom Epoxy Floor ── */
     const floorGeo = new THREE.PlaneGeometry(180, 180);
@@ -565,9 +624,9 @@ export function FabCity3D({
       const ctx = canvas.getContext("2d")!;
 
       // Glass pill background with deep slate contrast
-      ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
+      ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
       ctx.beginPath();
-      ctx.roundRect(6, 6, 428, 98, 20);
+      ctx.roundRect(6, 6, 428, 98, 22);
       ctx.fill();
 
       // Glowing border
@@ -575,29 +634,30 @@ export function FabCity3D({
       ctx.strokeStyle = hex;
       ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.roundRect(6, 6, 428, 98, 20);
+      ctx.roundRect(6, 6, 428, 98, 22);
       ctx.stroke();
 
       // Bay badge
       ctx.fillStyle = hex;
       ctx.font = "bold 20px 'JetBrains Mono', monospace";
-      ctx.fillText(bay, 24, 42);
+      ctx.fillText(bay, 26, 42);
 
       // Tool Title
       ctx.fillStyle = "#FFFFFF";
       ctx.font = "bold 34px 'Space Grotesk', sans-serif";
-      ctx.fillText(label, 24, 82);
+      ctx.fillText(label, 26, 82);
 
       // Stage description
       ctx.fillStyle = "#94A3B8";
-      ctx.font = "500 20px 'Space Grotesk', sans-serif";
+      ctx.font = "600 20px 'Space Grotesk', sans-serif";
       ctx.textAlign = "right";
       ctx.fillText(stage, 410, 64);
 
       const texture = new THREE.CanvasTexture(canvas);
-      const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+      // depthTest: true keeps labels in true 3D spatial order without wild foreground overlap
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: true, transparent: true });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(7.5, 1.88, 1);
+      sprite.scale.set(5.8, 1.45, 1);
       return sprite;
     };
 
@@ -711,24 +771,42 @@ export function FabCity3D({
 
         chamberTopY += chamberH;
       } else {
-        // ARGUS AI Citadel
+        // ARGUS AI Neural Core Server Cluster
         const coreChamber = new THREE.Mesh(
-          new THREE.CylinderGeometry(2.4, 2.8, 9.5, 6),
-          new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.92, roughness: 0.12, emissive: col, emissiveIntensity: 0.25 })
+          new THREE.CylinderGeometry(2.3, 2.7, 8.5, 6),
+          new THREE.MeshStandardMaterial({
+            color: 0x0F172A,
+            metalness: 0.94,
+            roughness: 0.15,
+            emissive: 0x0891B2,
+            emissiveIntensity: 0.35,
+          })
         );
-        coreChamber.position.y = chamberTopY + 4.75;
+        coreChamber.position.y = chamberTopY + 4.25;
         coreChamber.castShadow = true;
         toolGroup.add(coreChamber);
 
-        const ringFloat1 = new THREE.Mesh(
-          new THREE.TorusGeometry(3.6, 0.12, 12, 48),
-          new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85 })
-        );
-        ringFloat1.rotation.x = Math.PI / 2;
-        ringFloat1.position.y = chamberTopY + 4.8;
-        toolGroup.add(ringFloat1);
+        // Holographic Glowing Floating Data Rings
+        for (let ri = 0; ri < 3; ri++) {
+          const ringRadius = 3.3 - ri * 0.45;
+          const ringFloat = new THREE.Mesh(
+            new THREE.TorusGeometry(ringRadius, 0.08, 12, 48),
+            new THREE.MeshBasicMaterial({ color: 0x06B6D4, transparent: true, opacity: 0.85 - ri * 0.15 })
+          );
+          ringFloat.rotation.x = Math.PI / 2;
+          ringFloat.position.y = chamberTopY + 2.2 + ri * 2.2;
+          toolGroup.add(ringFloat);
+        }
 
-        chamberTopY += 9.5;
+        // Inner glowing neural core orb
+        const coreOrb = new THREE.Mesh(
+          new THREE.SphereGeometry(1.2, 24, 24),
+          new THREE.MeshBasicMaterial({ color: 0x38BDF8, transparent: true, opacity: 0.9 })
+        );
+        coreOrb.position.y = chamberTopY + 4.25;
+        toolGroup.add(coreOrb);
+
+        chamberTopY += 8.5;
       }
 
       /* 4. Machine Subsystem Variations */
@@ -788,9 +866,28 @@ export function FabCity3D({
 
       andonTowers.current.set(id, { red: redLamp, amber: amberLamp, green: greenLamp });
 
-      /* 6. Machine Sprite Label */
+      /* 6. Machine Sprite Label with Staggered Elevation & Laser Leader Line */
+      const staggeredElevation: Record<string, number> = {
+        "INTAKE": 2.2,
+        "DEP-01": 2.6,
+        "LITHO-01": 4.6,
+        "ETCH-01": 2.6,
+        "ETCH-02": 4.8,
+        "CMP-01": 2.8,
+        "CLEAN-01": 4.6,
+        "AI-CORE": 2.8,
+      };
+      const labelYOffset = staggeredElevation[id] ?? 2.8;
+
+      // Laser leader pin from tool top to label
+      const leaderGeo = new THREE.CylinderGeometry(0.025, 0.025, labelYOffset, 6);
+      const leaderMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55 });
+      const leader = new THREE.Mesh(leaderGeo, leaderMat);
+      leader.position.y = chamberTopY + labelYOffset / 2;
+      toolGroup.add(leader);
+
       const sprite = makeLabelSprite(meta.label, meta.stage, meta.bay, col);
-      sprite.position.y = chamberTopY + 2.2;
+      sprite.position.y = chamberTopY + labelYOffset;
       toolGroup.add(sprite);
 
       machinesContainer.add(toolGroup);
@@ -843,9 +940,16 @@ export function FabCity3D({
 
       const podGroup = new THREE.Group();
 
+      // Translucent high-tech cleanroom FOUP enclosure revealing the silicon wafer
       const podBody = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 0.6, 0.9),
-        new THREE.MeshStandardMaterial({ color: 0xF8FAFC, metalness: 0.3, roughness: 0.2 })
+        new THREE.MeshStandardMaterial({
+          color: 0xE0F2FE,
+          metalness: 0.15,
+          roughness: 0.12,
+          transparent: true,
+          opacity: 0.82,
+        })
       );
       podGroup.add(podBody);
 
@@ -960,7 +1064,7 @@ export function FabCity3D({
       { x: -18, z: -1.5, action: "inspect", targetMachine: "DEP-01", dwellTime: 2.5 },
       { x: -18, z: 5, action: "walk" },
       { x: 3, z: 6, action: "walk" },
-      { x: 3, z: 10, action: "inspect", targetMachine: "AI-CORE", dwellTime: 3.0 },
+      { x: 34, z: 2, action: "inspect", targetMachine: "AI-CORE", dwellTime: 3.0 },
       { x: 3, z: 6, action: "walk" },
       { x: 24, z: 6, action: "walk" },
       { x: 24, z: -1.5, action: "inspect", targetMachine: "CLEAN-01", dwellTime: 2.5 },
@@ -1014,6 +1118,7 @@ export function FabCity3D({
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
 
+      // Check machines
       const intersects = raycaster.intersectObjects(machinesContainer.children, true);
       if (intersects.length > 0) {
         let obj: THREE.Object3D | null = intersects[0].object;
@@ -1024,6 +1129,19 @@ export function FabCity3D({
           return;
         }
       }
+
+      // Check workers, pods, AMR for pointer cursor
+      const allClickable: THREE.Object3D[] = [];
+      workersRef.current.forEach(w => allClickable.push(w.group));
+      waferPods.current.forEach(p => allClickable.push(p.group));
+      if (amrRef.current) allClickable.push(amrRef.current.group);
+      const entityHits = raycaster.intersectObjects(allClickable, true);
+      if (entityHits.length > 0) {
+        el.style.cursor = "pointer";
+        setHoveredNode(null);
+        return;
+      }
+
       el.style.cursor = "default";
       setHoveredNode(null);
     };
@@ -1033,6 +1151,39 @@ export function FabCity3D({
       downTime = performance.now();
     };
 
+    // Helper: get a simple task description for a worker
+    const getWorkerTask = (worker: CleanroomWorker): string => {
+      const wp = worker.waypoints[worker.currentWaypointIdx];
+      if (!wp) return "Standing by";
+      if (worker.state === "interacting") {
+        const machineLabel = wp.targetMachine || "unknown";
+        if (wp.action === "pickup") return `Picking up wafer pod from ${machineLabel}`;
+        if (wp.action === "drop") return `Loading wafer pod into ${machineLabel}`;
+        if (wp.action === "inspect") return `Inspecting ${machineLabel} diagnostics`;
+        return `Working at ${machineLabel}`;
+      }
+      // Walking
+      const nextWp = worker.waypoints[worker.currentWaypointIdx];
+      if (nextWp?.targetMachine) {
+        if (nextWp.action === "pickup") return `Walking to ${nextWp.targetMachine} to pick up wafers`;
+        if (nextWp.action === "drop") return `Carrying wafer pod to ${nextWp.targetMachine}`;
+        if (nextWp.action === "inspect") return `Heading to ${nextWp.targetMachine} for inspection`;
+      }
+      if (worker.hasFoup) return "Carrying wafer pod to next station";
+      return "Walking through cleanroom";
+    };
+
+    // Helper: get a simple task description for a pod
+    const getPodTask = (pod: WaferPod): string => {
+      const fromNode = pod.path[pod.currentStep];
+      const toNode = pod.path[pod.currentStep + 1];
+      if (!toNode) return "Completed processing";
+      const fromLabel = TOWER_COORDS[fromNode]?.label || fromNode;
+      const toLabel = TOWER_COORDS[toNode]?.label || toNode;
+      const statusNote = pod.status === "critical" ? " ⚠ Flagged critical" : pod.status === "warning" ? " ⚠ Drift detected" : "";
+      return `Moving from ${fromLabel} → ${toLabel}${statusNote}`;
+    };
+
     const onPointerUp = (e: MouseEvent) => {
       if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6 || performance.now() - downTime > 400) return;
       const rect = el.getBoundingClientRect();
@@ -1040,6 +1191,7 @@ export function FabCity3D({
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
 
+      // 1. Check machines first
       const intersects = raycaster.intersectObjects(machinesContainer.children, true);
       if (intersects.length > 0) {
         let obj: THREE.Object3D | null = intersects[0].object;
@@ -1055,20 +1207,75 @@ export function FabCity3D({
             onSelRef.current?.(cid);
             focusOn(TOWER_COORDS[cid]?.x ?? 0, TOWER_COORDS[cid]?.z ?? 0);
           }
+          setEntityTooltip(null);
           return;
         }
-      } else {
-        if (selIdRef.current) {
-          onSelRef.current?.("");
-          targetCamPos.current = new THREE.Vector3(0, 34, 48);
-          targetCamLook.current = new THREE.Vector3(0, 3.8, 0);
+      }
+
+      // 2. Check workers
+      for (const worker of workersRef.current) {
+        const wHits = raycaster.intersectObjects([worker.group], true);
+        if (wHits.length > 0) {
+          setEntityTooltip({
+            name: `${worker.id} — ${worker.name}`,
+            role: worker.role,
+            task: getWorkerTask(worker),
+            type: "worker",
+            pos: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+          });
+          return;
         }
+      }
+
+      // 3. Check wafer pods
+      for (const pod of waferPods.current) {
+        const pHits = raycaster.intersectObjects([pod.group], true);
+        if (pHits.length > 0) {
+          setEntityTooltip({
+            name: `Wafer Pod #${pod.id}`,
+            role: "FOUP Carrier",
+            task: getPodTask(pod),
+            type: "pod",
+            pos: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+          });
+          return;
+        }
+      }
+
+      // 4. Check AMR
+      if (amrRef.current) {
+        const amrHits = raycaster.intersectObjects([amrRef.current.group], true);
+        if (amrHits.length > 0) {
+          setEntityTooltip({
+            name: "AMR-09",
+            role: "Autonomous Mobile Robot",
+            task: "Ferrying wafer pods between stations automatically",
+            type: "amr",
+            pos: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+          });
+          return;
+        }
+      }
+
+      // 5. Clicked on empty space — close everything
+      setEntityTooltip(null);
+      if (selIdRef.current) {
+        onSelRef.current?.("");
+        targetCamPos.current = new THREE.Vector3(0, 34, 48);
+        targetCamLook.current = new THREE.Vector3(0, 3.8, 0);
       }
     };
 
     el.addEventListener("mousemove", onPointerMove);
     el.addEventListener("mousedown", onPointerDown);
     el.addEventListener("mouseup", onPointerUp);
+
+    /* ── Keyboard Controls: WASD/Arrows for panning, +/- for zoom ── */
+    const keysDown = new Set<string>();
+    const onKeyDown = (e: KeyboardEvent) => { keysDown.add(e.key.toLowerCase()); };
+    const onKeyUp = (e: KeyboardEvent) => { keysDown.delete(e.key.toLowerCase()); };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup", onKeyUp);
 
     /* ── Render Loop ── */
     let animId: number;
@@ -1079,19 +1286,71 @@ export function FabCity3D({
       const delta = Math.min(clock.getDelta(), 0.1);
       const t = clock.getElapsedTime();
 
+      // Keyboard-driven WASD / Arrow panning
+      if (keysDown.size > 0) {
+        const panStep = 0.8;
+        const right = new THREE.Vector3();
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        right.crossVectors(forward, camera.up).normalize();
+        const flatForward = new THREE.Vector3(forward.x, 0, forward.z).normalize();
+
+        const keyDelta = new THREE.Vector3();
+        if (keysDown.has("w") || keysDown.has("arrowup")) keyDelta.add(flatForward.clone().multiplyScalar(panStep));
+        if (keysDown.has("s") || keysDown.has("arrowdown")) keyDelta.add(flatForward.clone().multiplyScalar(-panStep));
+        if (keysDown.has("a") || keysDown.has("arrowleft")) keyDelta.add(right.clone().multiplyScalar(-panStep));
+        if (keysDown.has("d") || keysDown.has("arrowright")) keyDelta.add(right.clone().multiplyScalar(panStep));
+        if (keysDown.has("=") || keysDown.has("+")) {
+          const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+          keyDelta.add(fwd.multiplyScalar(1.2));
+        }
+        if (keysDown.has("-") || keysDown.has("_")) {
+          const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+          keyDelta.add(fwd.multiplyScalar(-1.2));
+        }
+        if (keyDelta.lengthSq() > 0) {
+          camera.position.add(keyDelta);
+          ctrl.target.add(keyDelta);
+          targetCamPos.current = null;
+          targetCamLook.current = null;
+        }
+      }
+
       // Camera Orbit / Lerp Focus
       ctrl.autoRotate = autoRotateRef.current;
       ctrl.autoRotateSpeed = 0.55;
 
       if (targetCamPos.current && targetCamLook.current) {
-        camera.position.lerp(targetCamPos.current, 0.08);
-        ctrl.target.lerp(targetCamLook.current, 0.08);
-        if (camera.position.distanceTo(targetCamPos.current) < 0.2) {
+        camera.position.lerp(targetCamPos.current, 0.12);
+        ctrl.target.lerp(targetCamLook.current, 0.12);
+        if (camera.position.distanceTo(targetCamPos.current) < 0.15) {
           targetCamPos.current = null;
           targetCamLook.current = null;
         }
       }
       ctrl.update();
+
+      // Automated Tour Progression
+      if (camModeRef.current === "tour") {
+        tourTimerRef.current += delta;
+        if (tourTimerRef.current >= 4.0) {
+          tourTimerRef.current = 0;
+          tourStepRef.current = (tourStepRef.current + 1) % TOUR_SEQUENCE.length;
+          const nextTool = TOUR_SEQUENCE[tourStepRef.current];
+          const meta = TOWER_COORDS[nextTool];
+          if (meta) {
+            onSelRef.current?.(nextTool);
+            focusOn(meta.x, meta.z);
+          }
+        }
+      } else if (camModeRef.current === "tech") {
+        const tech = workersRef.current[0];
+        if (tech) {
+          const tp = tech.group.position;
+          ctrl.target.lerp(new THREE.Vector3(tp.x, 1.8, tp.z), 0.05);
+          camera.position.lerp(new THREE.Vector3(tp.x + 8, 9, tp.z + 12), 0.05);
+        }
+      }
 
       // Air Particles Drift
       const pAttr = particleSystem.geometry.attributes.position as THREE.BufferAttribute;
@@ -1337,6 +1596,8 @@ export function FabCity3D({
       el.removeEventListener("mousemove", onPointerMove);
       el.removeEventListener("mousedown", onPointerDown);
       el.removeEventListener("mouseup", onPointerUp);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
       waferPods.current.forEach((p) => scene.remove(p.group));
       workersRef.current.forEach((w) => scene.remove(w.group));
       if (amrRef.current) scene.remove(amrRef.current.group);
@@ -1369,6 +1630,8 @@ export function FabCity3D({
   }, [machines]);
 
   const resetToOverview = () => {
+    setActiveCamMode("iso");
+    camModeRef.current = "iso";
     onSelectMachine?.("");
     targetCamPos.current = new THREE.Vector3(0, 34, 48);
     targetCamLook.current = new THREE.Vector3(0, 3.8, 0);
@@ -1400,16 +1663,35 @@ export function FabCity3D({
     }
   }, [selectedMachineId]);
 
-  const setCameraPreset = (type: "iso" | "top" | "focus") => {
+  const setCameraPreset = (type: "iso" | "top" | "focus" | "tour" | "tech") => {
+    setActiveCamMode(type);
+    camModeRef.current = type;
     if (!cameraRef.current || !controlsRef.current) return;
     if (type === "iso") {
       resetToOverview();
     } else if (type === "top") {
       targetCamPos.current = new THREE.Vector3(0, 68, 2);
       targetCamLook.current = new THREE.Vector3(0, 0, 0);
-    } else if (type === "focus" && selectedMachineId) {
-      const meta = TOWER_COORDS[selectedMachineId];
+    } else if (type === "focus") {
+      const toolId = selectedMachineId || "ETCH-01";
+      const meta = TOWER_COORDS[toolId];
       if (meta) focusOn(meta.x, meta.z);
+    } else if (type === "tour") {
+      tourStepRef.current = 0;
+      tourTimerRef.current = 0;
+      const first = TOUR_SEQUENCE[0];
+      const meta = TOWER_COORDS[first];
+      if (meta) {
+        onSelRef.current?.(first);
+        focusOn(meta.x, meta.z);
+      }
+    } else if (type === "tech") {
+      const tech = workersRef.current[0];
+      if (tech) {
+        const tp = tech.group.position;
+        targetCamLook.current = new THREE.Vector3(tp.x, 2, tp.z);
+        targetCamPos.current = new THREE.Vector3(tp.x + 8, 9, tp.z + 12);
+      }
     }
   };
 
@@ -1498,10 +1780,10 @@ export function FabCity3D({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 4,
+            gap: 3,
             background: "rgba(15, 23, 42, 0.88)",
             backdropFilter: "blur(20px)",
-            padding: "4px 8px",
+            padding: "4px 6px",
             borderRadius: 9999,
             border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
@@ -1512,29 +1794,35 @@ export function FabCity3D({
             { t: "iso" as const, I: Compass, l: "ISO" },
             { t: "top" as const, I: Eye, l: "TOP" },
             { t: "focus" as const, I: Maximize2, l: "FOCUS" },
-          ].map(({ t, I, l }) => (
-            <button
-              key={t}
-              onClick={() => setCameraPreset(t)}
-              style={{
-                padding: "4px 10px",
-                fontSize: 11,
-                borderRadius: 9999,
-                background: "transparent",
-                color: "#CBD5E1",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                transition: "all 0.15s ease",
-              }}
-            >
-              <I size={12} /> {l}
-            </button>
-          ))}
+            { t: "tour" as const, I: Play, l: "TOUR" },
+            { t: "tech" as const, I: Users, l: "TECH" },
+          ].map(({ t, I, l }) => {
+            const isActive = activeCamMode === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setCameraPreset(t)}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: 11,
+                  borderRadius: 9999,
+                  background: isActive ? "rgba(56, 189, 248, 0.22)" : "transparent",
+                  color: isActive ? "#38BDF8" : "#CBD5E1",
+                  border: isActive ? "1px solid #38BDF8" : "1px solid transparent",
+                  cursor: "pointer",
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  transition: "all 0.15s ease",
+                }}
+                title={t === "tour" ? "Autonomous Wafer Process Flow Tour" : t === "tech" ? "Follow Cleanroom Technician" : undefined}
+              >
+                <I size={12} /> {l}
+              </button>
+            );
+          })}
 
           <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.15)", margin: "0 2px" }} />
 
@@ -1564,6 +1852,76 @@ export function FabCity3D({
             <RotateCw size={11} /> ORBIT
           </button>
         </div>
+      </div>
+
+      {/* ── ZOOM CONTROLS (RIGHT EDGE, VERTICAL) ── */}
+      <div
+        style={{
+          position: "absolute",
+          right: 14,
+          top: "50%",
+          transform: "translateY(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          background: "rgba(15, 23, 42, 0.88)",
+          backdropFilter: "blur(20px)",
+          padding: "5px",
+          borderRadius: 12,
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+          zIndex: 10,
+        }}
+      >
+        <button
+          onClick={() => zoomCamera("in")}
+          title="Zoom In"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: "transparent",
+            color: "#CBD5E1",
+            border: "1px solid rgba(255,255,255,0.08)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+            fontWeight: 300,
+            fontFamily: "'Space Grotesk', sans-serif",
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#F8FAFC"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#CBD5E1"; }}
+        >
+          +
+        </button>
+        <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.1)" }} />
+        <button
+          onClick={() => zoomCamera("out")}
+          title="Zoom Out"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: "transparent",
+            color: "#CBD5E1",
+            border: "1px solid rgba(255,255,255,0.08)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+            fontWeight: 300,
+            fontFamily: "'Space Grotesk', sans-serif",
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#F8FAFC"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#CBD5E1"; }}
+        >
+          −
+        </button>
       </div>
 
       {/* ── TIER 2: CLEANROOM STATIONS DOCK ── */}
@@ -1606,8 +1964,8 @@ export function FabCity3D({
             m?.health === "critical" || m?.health === "interlocked"
               ? "#EF4444"
               : m?.health === "warning"
-              ? "#F59E0B"
-              : "#10B981";
+                ? "#F59E0B"
+                : "#10B981";
 
           return (
             <button
@@ -1688,10 +2046,10 @@ export function FabCity3D({
             background: "rgba(15, 23, 42, 0.92)",
             backdropFilter: "blur(24px)",
             border: `1px solid ${selectedMachine.health === "critical" || selectedMachine.health === "interlocked"
-                ? "rgba(239,68,68,0.5)"
-                : selectedMachine.health === "warning"
-                  ? "rgba(245,158,11,0.5)"
-                  : "rgba(255,255,255,0.14)"
+              ? "rgba(239,68,68,0.5)"
+              : selectedMachine.health === "warning"
+                ? "rgba(245,158,11,0.5)"
+                : "rgba(255,255,255,0.14)"
               }`,
             borderRadius: 24,
             padding: "16px 20px",

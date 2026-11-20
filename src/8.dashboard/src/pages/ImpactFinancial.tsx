@@ -42,75 +42,79 @@ export function ImpactFinancial() {
 
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-surface-white rounded-3xl p-6 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="h-1 absolute top-0 inset-x-0 bg-gradient-to-r from-rose-500 to-red-600" />
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-label-caps text-on-surface-variant font-bold">TOTAL IMPACT LOSS</span>
-            <span className="material-symbols-outlined text-secondary text-[20px]">payments</span>
+            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-500 uppercase">TOTAL IMPACT LOSS</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">payments</span>
+            </div>
           </div>
-          <div className="mt-4 flex items-baseline gap-1 text-secondary font-headline-xl text-headline-xl font-bold">
+          <div className="mt-3 flex items-baseline gap-1 text-rose-600 font-headline-xl text-3xl md:text-4xl font-extrabold tracking-tight">
             <AnimatedNumber value={aggregate.total_impact_cost || 0} formatFn={formatCurrency} />
           </div>
-          <div className="mt-3 flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
-            <span>Avg: <strong className="text-primary font-bold">{formatCurrency(aggregate.avg_impact_cost || 0)}</strong></span>
-            <span className="font-label-caps text-label-caps text-secondary font-bold">Peak: {formatCurrency(aggregate.max_impact_cost || 0)}</span>
-          </div>
-          <div className="absolute bottom-2 right-2 flex gap-1 opacity-20">
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Avg: <strong className="text-slate-900 font-mono font-bold">{formatCurrency(aggregate.avg_impact_cost || 0)}</strong></span>
+            <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-mono font-bold">
+              Peak: {formatCurrency(aggregate.max_impact_cost || 0)}
+            </span>
           </div>
         </div>
 
-        <div className="bg-surface-white rounded-3xl p-6 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="h-1 absolute top-0 inset-x-0 bg-gradient-to-r from-slate-700 to-slate-900" />
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-label-caps text-on-surface-variant font-bold">SCRAP PENALTY LOSS</span>
-            <span className="material-symbols-outlined text-secondary text-[20px]">delete_forever</span>
+            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-500 uppercase">SCRAP PENALTY LOSS</span>
+            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+            </div>
           </div>
-          <div className="mt-4 flex items-baseline gap-1 text-primary font-headline-xl text-headline-xl font-bold">
+          <div className="mt-3 flex items-baseline gap-1 text-slate-900 font-headline-xl text-3xl md:text-4xl font-extrabold tracking-tight">
             <AnimatedNumber value={aggregate.total_scrap_cost || 0} formatFn={formatCurrency} />
           </div>
-          <div className="mt-3 flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
-            <span>Events: <strong className="text-primary font-bold">{aggregate.scrap_events || 0}</strong></span>
-            <span className="font-label-caps text-label-caps text-secondary">@ ₹41,665</span>
-          </div>
-          <div className="absolute bottom-2 right-2 flex gap-1 opacity-20">
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Events: <strong className="text-slate-900 font-mono font-bold">{aggregate.scrap_events || 0}</strong></span>
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-mono font-bold">
+              @ ₹41,665
+            </span>
           </div>
         </div>
 
-        <div className="bg-surface-white rounded-3xl p-6 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="h-1 absolute top-0 inset-x-0 bg-gradient-to-r from-amber-400 to-orange-500" />
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-label-caps text-on-surface-variant font-bold">ENERGY UTILITY TARIFF</span>
-            <span className="material-symbols-outlined text-secondary text-[20px]">bolt</span>
+            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-500 uppercase">ENERGY UTILITY TARIFF</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">bolt</span>
+            </div>
           </div>
-          <div className="mt-4 flex items-baseline gap-1 text-primary font-headline-xl text-headline-xl font-bold">
+          <div className="mt-3 flex items-baseline gap-1 text-slate-900 font-headline-xl text-3xl md:text-4xl font-extrabold tracking-tight">
             <AnimatedNumber value={aggregate.total_operational_cost || 0} formatFn={formatCurrency} />
           </div>
-          <div className="mt-3 flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
-            <span>Grid tariff: <strong className="text-primary font-bold">₹12.50/kWh</strong></span>
-            <span className="font-label-caps text-label-caps text-emerald-700 font-semibold">Industrial Tariffs</span>
-          </div>
-          <div className="absolute bottom-2 right-2 flex gap-1 opacity-20">
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Grid tariff: <strong className="text-slate-900 font-mono font-bold">₹12.50/kWh</strong></span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-mono font-bold">
+              Industrial
+            </span>
           </div>
         </div>
 
-        <div className="bg-surface-white rounded-3xl p-6 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="h-1 absolute top-0 inset-x-0 bg-gradient-to-r from-emerald-500 to-teal-500" />
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-label-caps text-on-surface-variant font-bold">CLEANROOM YIELD RATE</span>
-            <span className="material-symbols-outlined text-emerald-600 text-[20px]">check_circle</span>
+            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-500 uppercase">CLEANROOM YIELD RATE</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            </div>
           </div>
-          <div className="mt-4 flex items-baseline gap-1 text-emerald-700 font-headline-xl text-headline-xl font-bold">
-            <AnimatedNumber value={aggregate.yield_rate || 0} />%
+          <div className="mt-3 flex items-baseline gap-1 text-emerald-600 font-headline-xl text-3xl md:text-4xl font-extrabold tracking-tight">
+            <AnimatedNumber value={aggregate.yield_rate || 0} decimals={1} />%
           </div>
-          <div className="mt-3 flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
-            <span>Failures: <strong className="text-secondary font-bold">{aggregate.total_failures || 0}</strong></span>
-            <span className="font-label-caps text-label-caps text-emerald-700 font-semibold">Tier 1 Fab OK</span>
-          </div>
-          <div className="absolute bottom-2 right-2 flex gap-1 opacity-20">
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Failures: <strong className="text-rose-600 font-mono font-bold">{aggregate.total_failures || 0}</strong></span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-mono font-bold">
+              Tier 1 Fab OK
+            </span>
           </div>
         </div>
       </div>

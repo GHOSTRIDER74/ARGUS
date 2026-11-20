@@ -69,14 +69,13 @@ export function DriftDiagnosis() {
                 {data.events.map((evt: any) => {
                   const isSelected = selectedEvent?.id === evt.id;
                   return (
-                    <tr 
-                      key={evt.id} 
+                    <tr
+                      key={evt.id}
                       onClick={() => handleSelect(evt)}
-                      className={`cursor-pointer transition-colors ${
-                        isSelected 
-                          ? "bg-secondary-fixed/50 font-bold border-l-4 border-secondary" 
-                          : "hover:bg-surface-container-low"
-                      }`}
+                      className={`cursor-pointer transition-colors ${isSelected
+                        ? "bg-secondary-fixed/50 font-bold border-l-4 border-secondary"
+                        : "hover:bg-surface-container-low"
+                        }`}
                     >
                       <td className="py-2.5 px-2 text-on-surface-variant">{evt.time}</td>
                       <td className="py-2.5 px-2 font-semibold text-primary">{evt.machine_id}</td>
@@ -138,10 +137,10 @@ export function DriftDiagnosis() {
 
                 {chartData ? (
                   <div className="bg-surface-container-lowest p-2 rounded-2xl border border-outline-variant/20">
-                    <TrendChart 
-                      data={chartData.data} 
-                      xKey="index" 
-                      yKey="value" 
+                    <TrendChart
+                      data={chartData.data}
+                      xKey="index"
+                      yKey="value"
                       target={chartData.target}
                       upperLimit={chartData.upper_limit}
                       lowerLimit={chartData.lower_limit}
@@ -149,7 +148,7 @@ export function DriftDiagnosis() {
                     />
                   </div>
                 ) : (
-                  <div className="loading-state"><div className="loading-spinner"/> Loading chart...</div>
+                  <div className="loading-state"><div className="loading-spinner" /> Loading chart...</div>
                 )}
               </div>
             </div>

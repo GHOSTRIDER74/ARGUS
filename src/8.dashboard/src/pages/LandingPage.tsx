@@ -1,9 +1,46 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Lenis from "@studio-freight/lenis";
+import { AnimatedNumber } from "../components/AnimatedNumber";
+
+const MOSAIC_LEFT = [
+  0, 0.2, 0.4, 0, 0.6, 0.3,
+  0.4, 1.0, 0.7, 0.4, 0, 0.3,
+  0, 0.5, 1.0, 0.8, 0.3, 0
+];
+
+const MOSAIC_RIGHT = [
+  0, 0.3, 0.6, 1.0, 0.4, 0,
+  0.4, 0.8, 1.0, 0.5, 0, 0.2,
+  0.3, 0, 0.7, 0.4, 0, 0
+];
+
+const CHAMBERS = [
+  { id: "ETCH-01", val: "1200 W" },
+  { id: "ETCH-02", val: "24.8 mT" },
+  { id: "DEP-01", val: "380 °C" },
+  { id: "CMP-01", val: "7.2 psi" },
+  { id: "LITHO-01", val: "248 nm" },
+  { id: "CLEAN-01", val: "0.02 μm" }
+];
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const [activeChamberIdx, setActiveChamberIdx] = useState(0);
+  const [runsCount, setRunsCount] = useState(1567);
+
+  useEffect(() => {
+    const chamberTimer = setInterval(() => {
+      setActiveChamberIdx((prev) => (prev + 1) % 6);
+    }, 1300);
+    const runsTimer = setInterval(() => {
+      setRunsCount((prev) => prev + 1);
+    }, 4500);
+    return () => {
+      clearInterval(chamberTimer);
+      clearInterval(runsTimer);
+    };
+  }, []);
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -31,8 +68,8 @@ export function LandingPage() {
       {/* FLOATING TOP BAR (Shared Component: TopNavBar) */}
       <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-6 px-4 py-2 bg-surface-white/90 backdrop-blur-md floating pill mx-auto rounded-full max-w-fit shadow-[0_12px_40px_-8px_rgba(61,58,64,0.08)] ring-1 ring-primary/5">
         {/* Brand Anchor */}
-        <a 
-          className="flex items-center gap-2 text-headline-md font-headline-md font-bold tracking-tight text-primary pl-2 pr-1 active:scale-[0.98] transition-transform duration-150" 
+        <a
+          className="flex items-center gap-2 text-headline-md font-headline-md font-bold tracking-tight text-primary pl-2 pr-1 active:scale-[0.98] transition-transform duration-150"
           href="#"
         >
           <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-surface-white">
@@ -75,116 +112,151 @@ export function LandingPage() {
 
       {/* HERO SECTION */}
       <section className="relative pt-36 md:pt-44 pb-20 px-6 md:px-12 max-w-[1180px] mx-auto text-center overflow-visible" id="overview">
-        {/* Top Decorative Coral Pixel Mosaic Grids */}
+        {/* Luminous Ambient Aurora Glow */}
+        <div
+          className="absolute top-16 left-1/2 -translate-x-1/2 w-[760px] h-[360px] bg-gradient-to-tr from-rose-500/12 via-amber-500/8 to-sky-500/10 rounded-full blur-[100px] pointer-events-none -z-10 animate-pulse"
+          style={{ animationDuration: '6s' }}
+        />
+
+        {/* Top Decorative Coral Pixel Mosaic Grids (Animated Silicon Dies) */}
         <div className="absolute -top-12 -left-12 opacity-80 pointer-events-none select-none hidden lg:block">
           <div className="grid grid-cols-6 gap-1 w-36">
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/20"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/40"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/60"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/30"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/40"></div>
-            <div className="pixel-tile bg-[#FB8D7E]"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/70"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/40"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/30"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/50"></div>
-            <div className="pixel-tile bg-[#FB8D7E]"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/80"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/30"></div>
-            <div className="pixel-tile bg-transparent"></div>
+            {MOSAIC_LEFT.map((alpha, idx) => (
+              <div
+                key={idx}
+                className={`w-5 h-5 rounded-[3px] transition-all duration-500 ${alpha > 0 ? "animate-pixelTwinkle" : ""}`}
+                style={{
+                  background: alpha > 0 ? `rgba(251, 141, 126, ${alpha})` : "transparent",
+                  animationDelay: `${(idx % 6) * 320 + Math.floor(idx / 6) * 180}ms`
+                }}
+              />
+            ))}
           </div>
         </div>
 
         <div className="absolute -top-8 -right-8 opacity-80 pointer-events-none select-none hidden lg:block">
           <div className="grid grid-cols-6 gap-1 w-36">
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/30"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/60"></div>
-            <div className="pixel-tile bg-[#FB8D7E]"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/40"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/40"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/80"></div>
-            <div className="pixel-tile bg-[#FB8D7E]"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/50"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/20"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/30"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/70"></div>
-            <div className="pixel-tile bg-[#FB8D7E]/40"></div>
-            <div className="pixel-tile bg-transparent"></div>
-            <div className="pixel-tile bg-transparent"></div>
+            {MOSAIC_RIGHT.map((alpha, idx) => (
+              <div
+                key={idx}
+                className={`w-5 h-5 rounded-[3px] transition-all duration-500 ${alpha > 0 ? "animate-pixelTwinkle" : ""}`}
+                style={{
+                  background: alpha > 0 ? `rgba(251, 141, 126, ${alpha})` : "transparent",
+                  animationDelay: `${(idx % 6) * 280 + Math.floor(idx / 6) * 210}ms`
+                }}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Editorial Main Headline */}
-        <h1 className="text-display-hero-mobile md:text-display-hero font-display-hero text-primary max-w-4xl mx-auto tracking-tight mb-6">
-          Real-Time Electronics Telemetry & Drift Observability
+        {/* Editorial Main Headline with Shimmering Gradient Flow */}
+        <h1 className="text-display-hero-mobile md:text-display-hero font-display-hero font-extrabold text-primary max-w-4xl mx-auto tracking-tight mb-6">
+          Real-Time Electronics Telemetry &{" "}
+          <span className="bg-gradient-to-r from-slate-900 via-rose-600 to-amber-600 bg-clip-text text-transparent animate-gradientFlow">
+            Drift Observability
+          </span>
         </h1>
         <p className="text-body-md md:text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">
           Stream in-situ hardware telemetry, track statistical process drift, and isolate root-cause anomalies across multi-stage electronics production lines in real-time.
         </p>
 
-        {/* Real-time Telemetry Status & Launch Card */}
-        <div 
-          className="relative max-w-2xl mx-auto bg-surface-white rounded-3xl p-6 md:p-8 shadow-[0_12px_40px_-8px_rgba(61,58,64,0.08),0_0_0_1px_rgba(18,18,18,0.04)] text-left mb-16 transition-all hover:shadow-[0_16px_48px_-8px_rgba(61,58,64,0.12)]" 
+        {/* Real-time Telemetry Status & Launch Card (Animated Float & Sequential Chamber Flow) */}
+        <div
+          className="relative max-w-2xl mx-auto bg-surface-white/95 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-[0_16px_48px_-12px_rgba(61,58,64,0.12),0_0_0_1px_rgba(18,18,18,0.05)] text-left mb-16 transition-all hover:shadow-[0_24px_56px_-10px_rgba(61,58,64,0.18)] animate-heroFloat"
           id="queries"
         >
           {/* Top Micro Badge */}
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container text-label-caps font-label-caps font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#FB8D7E] animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-[#FB8D7E] animate-ping" />
               <span>LIVE ELECTRONICS INGESTION STREAM</span>
             </div>
-            <span className="font-mono text-xs text-on-surface-variant font-semibold">1,567 Runs • 590 Sensor Channels</span>
+            <div className="flex items-center gap-2 font-mono text-xs text-on-surface-variant font-semibold">
+              <span className="text-emerald-600 font-bold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                24.8 rec/s
+              </span>
+              <span>•</span>
+              <span>
+                <AnimatedNumber value={runsCount} /> Runs • <AnimatedNumber value={590} /> Channels
+              </span>
+            </div>
           </div>
 
           <div className="mb-5">
-            <h3 className="font-headline-md text-xl font-bold text-primary mb-1">
-              Cyber-Physical Twin Active
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-headline-md text-xl font-bold text-primary mb-1">
+                Cyber-Physical Twin Active
+              </h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                6/6 CHL SYNCED
+              </span>
+            </div>
             <p className="text-body-md text-sm text-on-surface-variant">
               Continuous in-situ monitoring across fabrication chambers, thermal profiles, etch rates, and precision electronics manufacturing stages.
             </p>
           </div>
 
-          {/* Quick Chamber Status Badges */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
-            {["ETCH-01", "ETCH-02", "DEP-01", "CMP-01", "LITHO-01", "CLEAN-01"].map((chamber) => (
-              <div key={chamber} className="p-2 rounded-xl bg-surface-container-low border border-outline-variant/30 text-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mb-1"></span>
-                <div className="text-[11px] font-mono font-bold text-primary">{chamber}</div>
-              </div>
-            ))}
+          {/* Sequential Live Chamber Status Pipeline */}
+          <div className="relative mb-6">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 relative z-10">
+              {CHAMBERS.map((chamber, idx) => {
+                const isActive = activeChamberIdx === idx;
+                return (
+                  <div
+                    key={chamber.id}
+                    className={`p-2.5 rounded-xl border text-center transition-all duration-300 relative ${isActive
+                        ? "bg-rose-50/90 border-rose-400 shadow-[0_0_18px_rgba(251,141,126,0.35)] -translate-y-1 scale-[1.04]"
+                        : "bg-surface-container-low border-outline-variant/30 hover:border-slate-300"
+                      }`}
+                  >
+                    {isActive && (
+                      <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                      </span>
+                    )}
+                    <span className={`w-1.5 h-1.5 rounded-full inline-block mb-1 ${isActive ? "bg-rose-500" : "bg-emerald-500"}`} />
+                    <div className="text-[11px] font-mono font-bold text-primary">{chamber.id}</div>
+                    <div className={`text-[9px] font-mono font-semibold transition-colors mt-0.5 ${isActive ? "text-rose-600 font-bold" : "text-slate-400"}`}>
+                      {chamber.val}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Connecting Flow Beam Beneath Chambers */}
+            <div className="h-0.5 w-full bg-slate-200/80 rounded-full mt-2 relative overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-transparent via-rose-500 to-transparent w-28 absolute transition-all duration-700 ease-linear"
+                style={{ left: `${(activeChamberIdx / 5) * 80}%` }}
+              />
+            </div>
           </div>
 
           {/* Actions Bar */}
           <div className="flex items-center justify-between pt-3 border-t border-surface-container/60">
             <div className="flex items-center gap-2 text-xs font-mono text-on-surface-variant">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>CUSUM Slack k=1.2 • Decay α=0.75</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => navigate("/app/facility")}
-                className="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-primary transition-all"
+                className="px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-xs font-semibold text-primary transition-all active:scale-95 shadow-xs"
               >
                 Facility 3D
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => navigate("/app/twin")}
-                className="px-5 py-2 rounded-full bg-secondary text-surface-white text-xs font-semibold hover:opacity-95 transition-all shadow-sm flex items-center gap-1.5"
+                className="group px-5 py-2 rounded-full bg-secondary text-surface-white text-xs font-semibold hover:opacity-95 transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2"
               >
                 <span>Launch Twin</span>
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </button>
             </div>
           </div>
@@ -192,20 +264,20 @@ export function LandingPage() {
 
         {/* Partner & Node Status Row */}
         <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14 text-on-surface-variant/70 font-display-hero text-sm md:text-base font-semibold tracking-wider uppercase">
-          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:text-primary transition-all">
             <span className="material-symbols-outlined text-[18px] text-primary">precision_manufacturing</span>
-            <span>LAM ETCH-01</span>
+            <span>ETCH-01</span>
           </div>
-          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:text-primary transition-all">
             <span className="material-symbols-outlined text-[18px] text-primary">layers</span>
-            <span>AMAT CMP-01</span>
+            <span>CMP-01</span>
           </div>
-          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 hover:text-primary transition-all">
             <span className="material-symbols-outlined text-[18px] text-primary">wb_iridescent</span>
-            <span>ASML LITHO-01</span>
+            <span>LITHO-01</span>
           </div>
           <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-mono text-xs lowercase">CUSUM/LSTM quorum (6/6) active</span>
           </div>
         </div>
@@ -213,15 +285,15 @@ export function LandingPage() {
 
       {/* BANNER FEATURE HERO CARD (Dark Slate Rocket/Chamber Capsule) */}
       <section className="max-w-[1180px] mx-auto px-4 md:px-8 mb-28">
-        <div className="bg-[#1e1e24] text-surface-white rounded-3xl p-8 md:p-14 relative overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="bg-[#1e1e24] text-surface-white rounded-3xl p-8 md:p-14 relative overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 group hover:shadow-rose-900/10 transition-shadow">
           {/* Left Content */}
           <div className="max-w-xl z-10 text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-white/10 text-coral-primary text-label-caps font-label-caps mb-4">
               <span className="material-symbols-outlined text-[14px]">speed</span>
-              <span>12MS INTERLOCK PIPELINE</span>
+              <span>12MS OBSERVABILITY PIPELINE</span>
             </div>
             <h2 className="text-headline-xl-mobile md:text-headline-xl font-headline-xl text-surface-white mb-4 tracking-tight">
-              From parameter drift anomaly to safety interlock in 12 milliseconds
+              From parameter drift anomaly to root-cause isolation in 12 milliseconds
             </h2>
             <p className="text-body-md md:text-body-lg font-body-md text-surface-variant/80 mb-6 leading-relaxed">
               While traditional manufacturing waits for post-production QA testing and costly scrap discovery, ARGUS detects statistical sensor drift using adaptive CUSUM and LSTM Autoencoders, quantifying yield risk and triggering safety interlocks instantaneously.
@@ -458,7 +530,7 @@ export function LandingPage() {
             <p className="text-body-md font-body-md text-on-surface-variant mb-6">
               The most common questions about the ARGUS Telemetry Mesh and how we deliver real-time observability across electronics manufacturing lines.
             </p>
-            <button 
+            <button
               onClick={() => navigate("/app/twin")}
               className="inline-flex items-center gap-2 bg-primary text-surface-white px-5 py-2.5 rounded-full text-label-md font-label-md hover:bg-neutral-800 transition-colors"
             >

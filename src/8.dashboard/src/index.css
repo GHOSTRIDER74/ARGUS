@@ -6,24 +6,24 @@
 
 :root {
   /* ── Surface & Background ── */
-  --bg-page: #fcf9f2;
+  --bg-page: #f8fafc;
   --bg-surface: #FFFFFF;
   --bg-surface-elevated: #FFFFFF;
-  --bg-sidebar: #121212;
+  --bg-sidebar: #0f172a;
   --bg-sidebar-hover: rgba(255, 255, 255, 0.08);
-  --bg-sidebar-active: #fe8f80;
-  --bg-glass: rgba(255, 255, 255, 0.85);
-  --bg-glass-dark: rgba(18, 18, 24, 0.9);
-  --bg-code: #f6f3ec;
-  --bg-badge: #FADCD7;
-  --bg-input: #f6f3ec;
+  --bg-sidebar-active: #fb7185;
+  --bg-glass: rgba(255, 255, 255, 0.9);
+  --bg-glass-dark: rgba(15, 23, 42, 0.95);
+  --bg-code: #f1f5f9;
+  --bg-badge: #ffe4e6;
+  --bg-input: #f1f5f9;
 
   /* ── Text ── */
-  --text-primary: #1c1c18;
-  --text-secondary: #444748;
-  --text-muted: #747878;
-  --text-inverse: #fcf9f2;
-  --text-link: #9b4338;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-inverse: #f8fafc;
+  --text-link: #e11d48;
 
   /* ── Primary Accent (Coral / Terracotta) ── */
   --accent-primary: #9b4338;
@@ -1173,6 +1173,41 @@ a:hover {
 @keyframes countUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes pixelTwinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 5px rgba(251, 141, 126, 0.7)); }
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes beamScan {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0; }
+}
+
+.animate-heroFloat {
+  animation: heroFloat 6s ease-in-out infinite;
+}
+
+.animate-pixelTwinkle {
+  animation: pixelTwinkle 3s ease-in-out infinite;
+}
+
+.animate-gradientFlow {
+  background-size: 200% auto;
+  animation: gradientFlow 5s ease infinite;
 }
 
 /* Staggered reveal */

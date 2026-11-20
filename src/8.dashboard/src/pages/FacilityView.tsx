@@ -3,15 +3,15 @@ import { api } from "../services/api";
 import { StatusBadge } from "../components/StatusBadge";
 import { RadialGauge } from "../components/RadialGauge";
 import { FabCity3D } from "../components/FabCity3D";
-import { 
-  Layers, 
-  Cpu, 
-  Zap, 
-  RotateCw, 
-  Droplets, 
-  ArrowRight, 
-  CheckCircle2, 
-  AlertTriangle, 
+import {
+  Layers,
+  Cpu,
+  Zap,
+  RotateCw,
+  Droplets,
+  ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
   XCircle,
   Activity,
   Maximize2,
@@ -130,7 +130,7 @@ export function FacilityView() {
     switch (status) {
       case "critical": return "var(--status-critical)";
       case "warning": return "var(--status-warning)";
-      case "healthy": 
+      case "healthy":
       default: return "var(--status-healthy)";
     }
   };
@@ -168,11 +168,11 @@ export function FacilityView() {
           </div>
 
           <div className="flex justify-center my-6">
-            <RadialGauge 
-              value={facility.total_machines > 0 ? facility.healthy / facility.total_machines : 1} 
-              label="Healthy Tool Ratio" 
-              size={180} 
-              strokeWidth={14} 
+            <RadialGauge
+              value={facility.total_machines > 0 ? facility.healthy / facility.total_machines : 1}
+              label="Healthy Tool Ratio"
+              size={180}
+              strokeWidth={14}
               color={getHealthColor(facility.overall_health)}
             />
           </div>
@@ -235,13 +235,12 @@ export function FacilityView() {
                   {Object.entries(selectedMachine.parameters || {}).map(([key, val]: any) => {
                     const isRoot = selectedMachine.root_causes?.includes(key);
                     return (
-                      <div 
+                      <div
                         key={key}
-                        className={`p-2.5 rounded-2xl border flex items-center justify-between transition-colors ${
-                          isRoot 
-                            ? "bg-amber-50 border-amber-300 text-amber-950" 
-                            : "bg-surface-container-low border-outline-variant/30 text-on-surface"
-                        }`}
+                        className={`p-2.5 rounded-2xl border flex items-center justify-between transition-colors ${isRoot
+                          ? "bg-amber-50 border-amber-300 text-amber-950"
+                          : "bg-surface-container-low border-outline-variant/30 text-on-surface"
+                          }`}
                       >
                         <div>
                           <div className="text-xs font-medium capitalize">
@@ -275,32 +274,30 @@ export function FacilityView() {
               {viewMode === "3d" ? "Argus FabCity 3D — Real-Time Spatial Pipeline" : "Production Line Flow Architecture"}
             </h2>
             <div className="font-body-md text-sm text-on-surface-variant mt-0.5">
-              {viewMode === "3d" 
-                ? "Interactive 3D digital twin: wafer flow conduits, glowing telemetry towers & real-time drift alerts" 
+              {viewMode === "3d"
+                ? "Interactive 3D digital twin: wafer flow conduits, glowing telemetry towers & real-time drift alerts"
                 : "End-to-end sequential wafer fabrication stages (Click a tool to inspect)"}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4 flex-wrap">
             {/* View Switcher Toggle */}
             <div className="inline-flex p-1 rounded-full bg-surface-container border border-outline-variant/30 shadow-inner">
               <button
                 onClick={() => setViewMode("3d")}
-                className={`px-4 py-1.5 rounded-full font-label-md text-xs font-semibold flex items-center gap-2 transition-all ${
-                  viewMode === "3d" 
-                    ? "bg-primary text-surface-white shadow-sm" 
-                    : "text-on-surface-variant hover:text-primary"
-                }`}
+                className={`px-4 py-1.5 rounded-full font-label-md text-xs font-semibold flex items-center gap-2 transition-all ${viewMode === "3d"
+                  ? "bg-primary text-surface-white shadow-sm"
+                  : "text-on-surface-variant hover:text-primary"
+                  }`}
               >
                 <span>🏙️</span> 3D FabCity Matrix
               </button>
               <button
                 onClick={() => setViewMode("2d")}
-                className={`px-4 py-1.5 rounded-full font-label-md text-xs font-semibold flex items-center gap-2 transition-all ${
-                  viewMode === "2d" 
-                    ? "bg-primary text-surface-white shadow-sm" 
-                    : "text-on-surface-variant hover:text-primary"
-                }`}
+                className={`px-4 py-1.5 rounded-full font-label-md text-xs font-semibold flex items-center gap-2 transition-all ${viewMode === "2d"
+                  ? "bg-primary text-surface-white shadow-sm"
+                  : "text-on-surface-variant hover:text-primary"
+                  }`}
               >
                 <span>📐</span> 2D Schematic
               </button>
@@ -357,11 +354,10 @@ export function FacilityView() {
                             <div
                               key={m.machine_id}
                               onClick={() => handleSelectMachine(m.machine_id)}
-                              className={`p-3.5 rounded-2xl cursor-pointer transition-all border ${
-                                isSelected 
-                                  ? "bg-surface-white border-secondary ring-2 ring-secondary/20 shadow-md" 
-                                  : "bg-surface-container-low border-outline-variant/30 hover:border-outline-variant shadow-sm"
-                              }`}
+                              className={`p-3.5 rounded-2xl cursor-pointer transition-all border ${isSelected
+                                ? "bg-surface-white border-secondary ring-2 ring-secondary/20 shadow-md"
+                                : "bg-surface-container-low border-outline-variant/30 hover:border-outline-variant shadow-sm"
+                                }`}
                             >
                               <div className="flex justify-between items-center mb-1">
                                 <span className="font-bold font-mono text-sm text-primary">{m.machine_id}</span>
@@ -381,9 +377,9 @@ export function FacilityView() {
                       {!isLast && (
                         <div className="flex items-center justify-center flex-1 px-2">
                           <div className="h-[2px] w-full bg-outline-variant/40 relative">
-                            <ArrowRight 
-                              size={16} 
-                              className="absolute -right-1 -top-2 text-on-surface-variant" 
+                            <ArrowRight
+                              size={16}
+                              className="absolute -right-1 -top-2 text-on-surface-variant"
                             />
                           </div>
                         </div>
@@ -400,11 +396,10 @@ export function FacilityView() {
                   <div key={stage.step} className="flex items-center flex-1">
                     <div
                       onClick={() => m && handleSelectMachine(m.machine_id)}
-                      className={`w-full max-w-[200px] p-4 rounded-2xl cursor-pointer transition-all border ${
-                        isSelected 
-                          ? "bg-surface-white border-secondary ring-2 ring-secondary/20 shadow-md" 
-                          : "bg-surface-container-low border-outline-variant/30 hover:border-outline-variant shadow-sm"
-                      }`}
+                      className={`w-full max-w-[200px] p-4 rounded-2xl cursor-pointer transition-all border ${isSelected
+                        ? "bg-surface-white border-secondary ring-2 ring-secondary/20 shadow-md"
+                        : "bg-surface-container-low border-outline-variant/30 hover:border-outline-variant shadow-sm"
+                        }`}
                     >
                       <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">
                         Step {stage.step}
@@ -433,9 +428,9 @@ export function FacilityView() {
                     {!isLast && (
                       <div className="flex items-center justify-center flex-1 px-2">
                         <div className="h-[2px] w-full bg-outline-variant/40 relative">
-                          <ArrowRight 
-                            size={16} 
-                            className="absolute -right-1 -top-2 text-on-surface-variant" 
+                          <ArrowRight
+                            size={16}
+                            className="absolute -right-1 -top-2 text-on-surface-variant"
                           />
                         </div>
                       </div>

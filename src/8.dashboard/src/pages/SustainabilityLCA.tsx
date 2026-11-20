@@ -56,46 +56,44 @@ export function SustainabilityLCA() {
         </div>
 
         {/* Total Energy Loss Card */}
-        <div className="bg-surface-white rounded-3xl p-6 md:p-8 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all">
+          <div className="h-1 absolute top-0 inset-x-0 bg-gradient-to-r from-amber-400 to-orange-500" />
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-label-caps text-on-surface-variant font-bold">CUMULATIVE ENERGY LOSS</span>
-            <span className="material-symbols-outlined text-secondary text-[20px]">bolt</span>
+            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-500 uppercase">CUMULATIVE ENERGY LOSS</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">bolt</span>
+            </div>
           </div>
           <div className="my-4">
-            <div className="font-headline-xl text-headline-xl font-bold text-secondary">
+            <div className="font-headline-xl text-3xl md:text-4xl font-extrabold text-amber-600">
               <AnimatedNumber value={summary.total_energy_loss_kwh || 0} formatFn={v => formatNumber(v, 2)} />
             </div>
-            <span className="text-sm font-label-caps text-on-surface-variant">kWh Lost</span>
+            <span className="text-xs font-mono text-slate-400">kWh Lost</span>
           </div>
-          <div className="pt-3 border-t border-outline-variant/20 font-mono text-xs text-on-surface-variant">
+          <div className="pt-3 border-t border-slate-100 font-mono text-xs text-slate-500">
             Avg: {formatNumber(summary.avg_energy_loss_kwh || 0, 4)} kWh <br />
             Peak anomaly: {formatNumber(summary.max_energy_loss_kwh || 0, 4)} kWh
-          </div>
-          <div className="absolute bottom-2 right-2 flex gap-1 opacity-20">
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
           </div>
         </div>
 
         {/* Total CO2 Emissions Card */}
-        <div className="bg-surface-white rounded-3xl p-6 md:p-8 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)] relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all">
+          <div className="h-1 absolute top-0 inset-x-0 bg-gradient-to-r from-emerald-500 to-teal-500" />
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-label-caps text-on-surface-variant font-bold">CLEANROOM CARBON FOOTPRINT</span>
-            <span className="material-symbols-outlined text-emerald-600 text-[20px]">eco</span>
+            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-500 uppercase">CLEANROOM CARBON FOOTPRINT</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">eco</span>
+            </div>
           </div>
           <div className="my-4">
-            <div className="font-headline-xl text-headline-xl font-bold text-primary">
+            <div className="font-headline-xl text-3xl md:text-4xl font-extrabold text-emerald-600">
               <AnimatedNumber value={summary.total_co2_emissions_kg || 0} formatFn={v => formatNumber(v, 2)} />
             </div>
-            <span className="text-sm font-label-caps text-on-surface-variant">kg CO₂ Equivalent</span>
+            <span className="text-xs font-mono text-slate-400">kg CO₂ Equivalent</span>
           </div>
-          <div className="pt-3 border-t border-outline-variant/20 font-mono text-xs text-on-surface-variant">
+          <div className="pt-3 border-t border-slate-100 font-mono text-xs text-slate-500">
             Grid Intensity: 0.42 kg/kWh <br />
             Avg: {formatNumber(summary.avg_co2_emission_kg || 0, 4)} kg
-          </div>
-          <div className="absolute bottom-2 right-2 flex gap-1 opacity-20">
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
-            <div className="w-1.5 h-1.5 bg-secondary"></div>
           </div>
         </div>
       </div>
