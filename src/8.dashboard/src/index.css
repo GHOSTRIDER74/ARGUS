@@ -1194,3 +1194,160 @@ a:hover {
   .hero-title { letter-spacing: -1px; }
   .landing-metrics { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* ── Theme colour variables (generated): light default, dark inside the dashboard ── */
+:root {
+  --c-surface-white: 255 255 255;
+  --c-background: 252 249 242;
+  --c-secondary-fixed: 255 218 213;
+  --c-secondary-container: 254 143 128;
+  --c-secondary: 155 67 56;
+  --c-primary-fixed: 229 226 225;
+  --c-inverse-primary: 200 198 197;
+  --c-on-error-container: 147 0 10;
+  --c-footer-dark: 18 18 18;
+  --c-inverse-surface: 49 49 44;
+  --c-on-tertiary: 255 255 255;
+  --c-outline: 116 120 120;
+  --c-on-secondary: 255 255 255;
+  --c-on-surface: 28 28 24;
+  --c-surface-container-lowest: 255 255 255;
+  --c-surface-cream-alt: 237 231 223;
+  --c-on-secondary-fixed-variant: 125 44 35;
+  --c-surface-container-high: 235 232 225;
+  --c-on-error: 255 255 255;
+  --c-coral-subtle: 250 220 215;
+  --c-coral-primary: 251 141 126;
+  --c-on-primary-fixed: 28 27 27;
+  --c-primary: 0 0 0;
+  --c-on-surface-variant: 68 71 72;
+  --c-secondary-fixed-dim: 255 180 169;
+  --c-tertiary-fixed-dim: 202 197 204;
+  --c-on-primary-container: 133 131 131;
+  --c-outline-variant: 196 199 199;
+  --c-surface-variant: 229 226 219;
+  --c-on-tertiary-fixed-variant: 73 69 76;
+  --c-surface-container-highest: 229 226 219;
+  --c-primary-fixed-dim: 200 198 197;
+  --c-tertiary-container: 29 27 32;
+  --c-tertiary: 0 0 0;
+  --c-inverse-on-surface: 243 240 233;
+  --c-error: 186 26 26;
+  --c-surface-container-low: 246 243 236;
+  --c-surface: 252 249 242;
+  --c-on-tertiary-fixed: 29 27 32;
+  --c-surface-tint: 95 94 94;
+  --c-surface-container: 241 238 231;
+  --c-tertiary-fixed: 231 224 232;
+  --c-on-tertiary-container: 135 130 137;
+  --c-on-primary-fixed-variant: 71 70 70;
+  --c-on-secondary-container: 118 39 30;
+  --c-primary-container: 28 27 27;
+  --c-surface-bright: 252 249 242;
+  --c-surface-dim: 220 218 211;
+  --c-error-container: 255 218 214;
+  --c-on-secondary-fixed: 64 1 1;
+  --c-on-background: 28 28 24;
+  --c-on-primary: 255 255 255;
+  --c-white: 255 255 255;
+  --c-emerald-50: 236 253 245;
+  --c-emerald-100: 209 250 229;
+  --c-emerald-500: 16 185 129;
+  --c-emerald-600: 5 150 105;
+  --c-emerald-700: 4 120 87;
+  --c-emerald-800: 6 95 70;
+  --c-amber-100: 254 243 199;
+  --c-amber-500: 245 158 11;
+  --c-amber-600: 217 119 6;
+  --c-amber-700: 180 83 9;
+  --c-amber-800: 146 64 14;
+  --c-amber-900: 120 53 15;
+}
+.theme-dark {
+  --c-background: 10 15 28;
+  --c-surface: 10 15 28;
+  --c-surface-bright: 10 15 28;
+  --c-surface-dim: 7 11 21;
+  --c-surface-white: 17 26 44;
+  --c-surface-container-lowest: 17 26 44;
+  --c-surface-container-low: 22 33 58;
+  --c-surface-container: 26 38 66;
+  --c-surface-container-high: 32 48 79;
+  --c-surface-container-highest: 40 57 92;
+  --c-surface-variant: 32 48 79;
+  --c-surface-cream-alt: 22 33 58;
+  --c-surface-tint: 138 152 179;
+  --c-on-surface: 227 232 242;
+  --c-on-background: 227 232 242;
+  --c-on-surface-variant: 147 163 189;
+  --c-outline: 94 110 138;
+  --c-outline-variant: 42 58 90;
+  --c-primary: 242 245 250;
+  --c-on-primary: 10 15 28;
+  --c-primary-container: 227 232 242;
+  --c-on-primary-container: 58 70 96;
+  --c-primary-fixed: 32 48 79;
+  --c-primary-fixed-dim: 58 74 106;
+  --c-on-primary-fixed: 242 245 250;
+  --c-on-primary-fixed-variant: 201 210 227;
+  --c-inverse-primary: 58 74 106;
+  --c-inverse-surface: 227 232 242;
+  --c-inverse-on-surface: 10 15 28;
+  --c-secondary: 255 140 122;
+  --c-on-secondary: 10 15 28;
+  --c-secondary-container: 255 140 122;
+  --c-on-secondary-container: 42 14 10;
+  --c-secondary-fixed: 58 31 42;
+  --c-secondary-fixed-dim: 255 180 169;
+  --c-on-secondary-fixed: 255 218 213;
+  --c-on-secondary-fixed-variant: 255 180 169;
+  --c-coral-subtle: 58 31 42;
+  --c-coral-primary: 255 140 122;
+  --c-tertiary: 227 232 242;
+  --c-on-tertiary: 10 15 28;
+  --c-tertiary-container: 227 232 242;
+  --c-on-tertiary-container: 94 110 138;
+  --c-tertiary-fixed: 32 48 79;
+  --c-tertiary-fixed-dim: 58 74 106;
+  --c-on-tertiary-fixed: 242 245 250;
+  --c-on-tertiary-fixed-variant: 201 210 227;
+  --c-footer-dark: 6 9 18;
+  --c-error: 248 113 113;
+  --c-on-error: 10 15 28;
+  --c-error-container: 59 26 34;
+  --c-on-error-container: 252 165 165;
+  --c-white: 17 26 44;
+  --c-emerald-50: 14 42 36;
+  --c-emerald-100: 14 46 38;
+  --c-emerald-500: 34 197 94;
+  --c-emerald-600: 52 211 153;
+  --c-emerald-700: 52 211 153;
+  --c-emerald-800: 110 231 183;
+  --c-amber-100: 51 40 15;
+  --c-amber-500: 251 191 36;
+  --c-amber-600: 251 191 36;
+  --c-amber-700: 252 211 77;
+  --c-amber-800: 252 211 77;
+  --c-amber-900: 253 230 138;
+  --bg-surface: #111A2C;
+  --bg-page: #0A0F1C;
+  --border-light: rgba(148, 163, 189, 0.16);
+  --border-medium: rgba(148, 163, 189, 0.28);
+  --text-muted: #8494AF;
+  --text-primary: #E3E8F2;
+  --accent-primary: #FF8C7A;
+  --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* ── Digital twin: animated connector between machines on the production line ── */
+.flow-line {
+  height: 2px;
+  background-image: linear-gradient(90deg, rgba(255, 140, 122, 0.9) 50%, transparent 50%);
+  background-size: 10px 2px;
+  animation: flow-dash 0.8s linear infinite;
+  opacity: 0.8;
+}
+@keyframes flow-dash { to { background-position: 10px 0; } }
+@media (prefers-reduced-motion: reduce) { .flow-line { animation: none; } }

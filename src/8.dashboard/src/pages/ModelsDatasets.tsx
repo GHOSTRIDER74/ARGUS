@@ -151,7 +151,7 @@ export function ModelsDatasets() {
                   <td className="py-2.5 px-3 font-semibold text-primary">{col.name}</td>
                   <td className="py-2.5 px-3 text-on-surface-variant">{col.dtype}</td>
                   <td className="py-2.5 px-3">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 ring-1 ring-inset ring-emerald-400/25 text-[11px] font-bold">
                       {col.null_pct}%
                     </span>
                   </td>

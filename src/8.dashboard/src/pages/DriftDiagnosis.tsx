@@ -7,8 +7,10 @@ export function DriftDiagnosis() {
   const [data, setData] = useState<any>(null);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
+  const [benchmark, setBenchmark] = useState<any>(null);
 
   useEffect(() => {
+    api.getDriftBenchmark().then(res => setBenchmark(res));
     api.getDriftEvents().then(res => {
       setData(res);
       if (res.events?.length > 0) {
@@ -106,10 +108,18 @@ export function DriftDiagnosis() {
 
           {selectedEvent ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                   <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">Root Cause</div>
                   <div className="font-semibold text-primary mt-1 text-sm">{selectedEvent.root_cause}</div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
+                  <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">Detected By</div>
+                  <div className="font-semibold text-primary mt-1 text-sm">{selectedEvent.detected_by || "CUSUM"}</div>
+                  {selectedEvent.lstm_error != null && (
+                    <div className="text-[10px] text-on-surface-variant mt-0.5 font-mono">LSTM error {selectedEvent.lstm_error} / τ₉₉ {selectedEvent.lstm_threshold}</div>
+                  )}
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30">
@@ -160,6 +170,90 @@ export function DriftDiagnosis() {
           )}
         </div>
       </div>
+
+      {/* Benchmark Evaluation Table */}
+      {benchmark && (
+        <div className="bg-surface-white rounded-3xl p-6 md:p-7 border border-outline-variant/30 shadow-[0_8px_32px_-4px_rgba(61,58,64,0.04)]">
+          <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20 mb-5">
+            <div>
+              <h2 className="font-headline-md text-headline-md font-bold text-primary">
+                Detection Performance Benchmark
+              </h2>
+              <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Measured on SECOM · {(benchmark.config?.scenarios_per_seed ?? 0) * (benchmark.config?.seeds ?? 0)} drift-injection runs · W={benchmark.config?.window} · k={benchmark.config?.cusum?.k} / h={benchmark.config?.cusum?.h}
+              </p>
+            </div>
+            <span className="material-symbols-outlined text-secondary text-[22px]">analytics</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-body-sm text-body-sm">
+              <thead>
+                <tr className="border-b border-outline-variant/30 font-label-caps text-label-caps text-on-surface-variant">
+                  <th className="py-2.5 px-3">Method</th>
+                  <th className="py-2.5 px-3 text-center">Latency (win.)</th>
+                  <th className="py-2.5 px-3 text-center">FAR (%)</th>
+                  <th className="py-2.5 px-3 text-center">F1 Score</th>
+                  <th className="py-2.5 px-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/20">
+                {Object.entries(benchmark.overall || {}).map(([method, ref]: [string, any]) => {
+                  const isArgus = method === "ARGUS";
+                  return (
+                    <tr key={method} className={isArgus ? "bg-secondary-fixed/30 font-semibold" : "hover:bg-surface-container-low"}>
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2">
+                          {isArgus && <span className="w-2 h-2 rounded-full bg-secondary inline-block" />}
+                          <span className={isArgus ? "text-secondary font-bold" : "text-primary"}>
+                            {method}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono">
+                        <span className={isArgus ? "text-emerald-700 font-bold" : "text-on-surface"}>
+                          {ref.latency_mean ?? "-"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono">
+                        <span className={isArgus ? "text-on-surface" : "text-on-surface"}>
+                          {ref.far_pct_mean}%
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono">
+                        <span className={isArgus ? "text-emerald-700 font-bold" : "text-on-surface"}>
+                          {ref.f1_mean?.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {isArgus
+                          ? <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 ring-1 ring-inset ring-emerald-400/25 text-xs font-bold">Hybrid (CUSUM OR LSTM-AE)</span>
+                          : <span className="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs">Baseline</span>
+                        }
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "CUSUM k / h", value: `${benchmark.config?.cusum?.k} / ${benchmark.config?.cusum?.h}` },
+              { label: "CUSUM decay λ", value: (benchmark.config?.cusum?.decay || []).join(" / ") },
+              { label: "LSTM-AE window W", value: benchmark.config?.window },
+              { label: "EWMA λ / L", value: `${benchmark.config?.ewma?.lambda} / ${benchmark.config?.ewma?.L}` },
+            ].map(({ label, value }) => (
+              <div key={label} className="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+                <div className="text-[10px] font-label-caps text-on-surface-variant uppercase font-bold">{label}</div>
+                <div className="font-mono text-primary font-semibold mt-1 text-sm">{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

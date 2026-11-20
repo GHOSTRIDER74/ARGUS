@@ -24,6 +24,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src" / "2.twin"))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "4.impact"))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "5.lca"))
 sys.path.insert(0, str(PROJECT_ROOT / "src" / "6.simulation"))
+sys.path.insert(0, str(PROJECT_ROOT / "src" / "3.drift"))
 
 # ── Import engines ──
 from streamer import TelemetryStreamer, get_streamer
@@ -34,6 +35,9 @@ from scenario_engine import ScenarioEngine, SimulationConfig, get_scenario_engin
 
 # ── Track API start time ──
 API_START_TIME = time.time()
+# Measured drift benchmark (written by src/3.drift/real_benchmark.py)
+BENCHMARK_PATH = PROJECT_ROOT / "results" / "real_benchmark_results.json"
+
 
 
 # ── Lifespan ──
@@ -385,6 +389,18 @@ def get_simulation_parameters():
         "parameters": engine.get_available_parameters(),
         "drift_types": engine.get_available_drift_types(),
     }
+
+
+# ──────────────────────────────────────
+#  Module 3b: Benchmark Evaluation
+# ──────────────────────────────────────
+
+@app.get("/api/drift/benchmark")
+def get_benchmark():
+    """Measured F1, latency and FAR for EWMA, CUSUM, LSTM-AE and the ARGUS hybrid (CUSUM OR LSTM-AE)."""
+    if not BENCHMARK_PATH.exists():
+        raise HTTPException(404, "No benchmark yet: run python src/3.drift/real_benchmark.py")
+    return json.loads(BENCHMARK_PATH.read_text(encoding="utf-8"))
 
 
 # ──────────────────────────────────────

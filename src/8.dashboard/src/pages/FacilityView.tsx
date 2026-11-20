@@ -182,13 +182,13 @@ export function FacilityView() {
               <div className="text-xl font-bold font-mono text-primary">{facility.total_machines}</div>
               <div className="text-[10px] uppercase font-bold text-on-surface-variant mt-0.5">Total</div>
             </div>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200/50">
-              <div className="text-xl font-bold font-mono text-emerald-700">{facility.healthy}</div>
-              <div className="text-[10px] uppercase font-bold text-emerald-700 mt-0.5">Healthy</div>
+            <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-400/25">
+              <div className="text-xl font-bold font-mono text-emerald-300">{facility.healthy}</div>
+              <div className="text-[10px] uppercase font-bold text-emerald-300 mt-0.5">Healthy</div>
             </div>
-            <div className="p-2.5 rounded-2xl bg-amber-50 border border-amber-200/50">
-              <div className="text-xl font-bold font-mono text-amber-700">{facility.warning}</div>
-              <div className="text-[10px] uppercase font-bold text-amber-700 mt-0.5">Warning</div>
+            <div className="p-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/30">
+              <div className="text-xl font-bold font-mono text-amber-300">{facility.warning}</div>
+              <div className="text-[10px] uppercase font-bold text-amber-300 mt-0.5">Warning</div>
             </div>
             <div className="p-2.5 rounded-2xl bg-coral-subtle border border-[#FB8D7E]/30">
               <div className="text-xl font-bold font-mono text-secondary">{facility.critical}</div>
@@ -239,7 +239,7 @@ export function FacilityView() {
                         key={key}
                         className={`p-2.5 rounded-2xl border flex items-center justify-between transition-colors ${
                           isRoot 
-                            ? "bg-amber-50 border-amber-300 text-amber-950" 
+                            ? "bg-amber-400/10 border-amber-400/50 text-amber-200" 
                             : "bg-surface-container-low border-outline-variant/30 text-on-surface"
                         }`}
                       >

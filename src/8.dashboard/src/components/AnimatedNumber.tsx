@@ -10,9 +10,11 @@ interface AnimatedNumberProps {
 export function AnimatedNumber({ 
   value, 
   duration = 1000, 
-  formatFn = (v) => v.toString(),
-  className 
+  formatFn,
+  className
 }: AnimatedNumberProps) {
+  // whole-number targets count in whole numbers; others keep two decimals
+  const format = formatFn ?? ((v: number) => Number.isInteger(value) ? Math.round(v).toLocaleString("en-IN") : v.toFixed(2));
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
@@ -39,5 +41,5 @@ export function AnimatedNumber({
     window.requestAnimationFrame(step);
   }, [value, duration]);
 
-  return <span className={className}>{formatFn(displayValue)}</span>;
+  return <span className={className}>{format(displayValue)}</span>;
 }

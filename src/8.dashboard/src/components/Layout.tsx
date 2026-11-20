@@ -4,7 +4,7 @@ import { Header } from "./Header";
 
 export function Layout() {
   return (
-    <div className="min-h-screen bg-background text-on-surface antialiased flex selection:bg-coral-subtle selection:text-primary">
+    <div className="theme-dark min-h-screen bg-background text-on-surface antialiased flex selection:bg-coral-subtle selection:text-primary">
       {/* Sleek Fixed Sidebar */}
       <Sidebar />
 

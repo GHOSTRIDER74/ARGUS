@@ -8,10 +8,12 @@ export const api = {
   getMachine: (id: string) => fetch(`${API_BASE}/twin/machines/${id}`).then(r => r.json()),
   getFacility: () => fetch(`${API_BASE}/twin/facility`).then(r => r.json()),
   ingestToTwin: (count: number = 1) => fetch(`${API_BASE}/twin/ingest?count=${count}`, { method: 'POST' }).then(r => r.json()),
+  resetTelemetry: () => fetch(`${API_BASE}/telemetry/reset`, { method: 'POST' }).then(r => r.json()),
 
   // Drift
   getDriftEvents: () => fetch(`${API_BASE}/drift/events`).then(r => r.json()),
   getDriftTimeseries: (param: string, downsample: number = 4) => fetch(`${API_BASE}/drift/timeseries/${param}?downsample=${downsample}`).then(r => r.json()),
+  getDriftBenchmark: () => fetch(`${API_BASE}/drift/benchmark`).then(r => r.json()),
 
   // Impact
   getImpactAggregate: () => fetch(`${API_BASE}/impact/aggregate`).then(r => r.json()),
