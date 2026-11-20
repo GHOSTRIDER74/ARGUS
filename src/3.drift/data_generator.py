@@ -3,18 +3,19 @@ import pandas as pd
 
 def generate_pcb_data(n_samples=2000, drift_start=1200, seed=42):
     """
-    Simulates 4-stage PCB process parameters.
+    Simulates the four plasma-etch parameters used across ARGUS
+    (same names as the processed SECOM etch channels).
     Injects gradual drift after drift_start timestep.
     """
     np.random.seed(seed)
     t = np.arange(n_samples)
 
-    # Normal operating ranges (mean, std)
+    # Normal operating ranges (mean, std), in engineering units
     params = {
-        "reflow_temp_c":      (245.0, 1.5),
-        "solder_viscosity_pa": (180.0, 3.0),
-        "etch_concentration":  (0.85,  0.01),
-        "inspection_defect_rate": (0.02, 0.005),
+        "rf_power":         (1500.0, 15.0),   # W
+        "etch_rate":        (320.0,  4.0),    # nm/min
+        "chamber_pressure": (40.0,   0.5),    # mTorr
+        "etchant_gas_flow": (100.0,  1.5),    # sccm
     }
 
     data = {}
@@ -31,6 +32,7 @@ def generate_pcb_data(n_samples=2000, drift_start=1200, seed=42):
     df = pd.DataFrame(data)
     df["timestep"] = t
     df["drift_injected"] = t >= drift_start  # ground truth label
+    df["Pass/Fail"] = np.where(df["drift_injected"], 1, -1)  # SECOM convention: 1 = fail
     return df
 
 

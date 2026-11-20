@@ -7,23 +7,23 @@ from preprocessor import preprocess, FEATURE_COLS
 from cusum_detector import run_cusum
 from lstm_autoencoder import train_autoencoder, score_windows, get_lstm_alerts
 from drift_explainer import explain_drift
-from real_data_loader import load_and_clean_secom # (The script we wrote previously)
+from data_generator import generate_pcb_data
 
 def run():
-    # ── Step 1: Ingest Real Data ──
-    print("Ingesting real semiconductor telemetry...")
-    df = load_and_clean_secom('uci-secom.csv')
-    
-    # We will use the first 500 time-steps as our "healthy baseline" for CUSUM and LSTM
-    # In a real factory, this would be a known period of high-yield production
-    DRIFT_START = 500 
+    # ── Step 1: Generate telemetry with a known drift ──
+    # Offline Module 3 demo on synthetic etch data, so the drift onset is known.
+    # (The live system streams real SECOM data through src/2.twin instead.)
+    DRIFT_START = 1200
+    print("Generating synthetic etch telemetry...")
+    df = generate_pcb_data(n_samples=2000, drift_start=DRIFT_START)
 
     # ── Step 2: Preprocess ──
     print("Preprocessing...")
     X_windows, scaler, labels = preprocess(df, window_size=30)
     
-    # Train LSTM only on the healthy baseline windows
-    X_normal = X_windows[:DRIFT_START]
+    # Train LSTM only on the healthy baseline windows (those ending before the drift)
+    n_normal = DRIFT_START - 30
+    X_normal = X_windows[:n_normal]
     # ── Step 3a: CUSUM ──
     print("Running CUSUM...")
     cusum_df = run_cusum(df)

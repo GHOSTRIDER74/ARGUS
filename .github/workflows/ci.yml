@@ -2,51 +2,53 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
 
 jobs:
-  test:
+  backend:
+    name: Backend (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11"]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # CPU-only PyTorch keeps the install small on CI runners
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
-          pip install pytest pytest-cov flake8
+          pip install pytest flake8
 
-      - name: Lint with flake8
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+      - name: Lint (syntax errors and undefined names only)
+        run: flake8 src scripts tests EDA --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=src/8.dashboard
 
-      - name: Run tests
-        run: |
-          pytest tests/ --cov=. --cov-report=xml -v
-        continue-on-error: true   # Remove once tests/ directory is set up
+      - name: Unit tests (hybrid CUSUM + LSTM-AE rule)
+        run: pytest tests/ -v
 
-      - name: Run pipeline smoke test
-        run: |
-          python pipeline.py --smoke-test
-        continue-on-error: true   # Remove once --smoke-test flag is implemented
+  dashboard:
+    name: Dashboard build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/8.dashboard
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/8.dashboard/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

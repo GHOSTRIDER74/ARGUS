@@ -32,6 +32,9 @@ data/
 *.hdf5
 *.pkl
 *.pickle
+# ...but the dashboard's npm manifests are code, not data
+!src/8.dashboard/package.json
+!src/8.dashboard/package-lock.json
 
 # Model checkpoints & outputs
 models/
@@ -65,3 +68,7 @@ htmlcov/
 
 # MyPy
 .mypy_cache/
+# Not part of the project (kept locally only)
+Wafer/
+build.py
+argus_module3_output.png
