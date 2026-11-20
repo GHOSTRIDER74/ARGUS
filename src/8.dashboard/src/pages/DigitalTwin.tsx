@@ -27,6 +27,8 @@ export function DigitalTwin() {
   const [selected, setSelected] = useState("ETCH-01");
   const [running, setRunning] = useState(true);
   const [ended, setEnded] = useState(false);
+  const [cursor, setCursor] = useState(0);              // position in the SECOM replay (0..total)
+  const [total, setTotal] = useState(1567);
   const history = useRef<Record<string, { t: number; v: number }[]>>({});
   const tick = useRef(0);
 
@@ -44,6 +46,7 @@ export function DigitalTwin() {
 
   useEffect(() => {
     refresh().catch(() => {});
+    api.getHealth().then((h) => { setCursor(h.stream_cursor); setTotal(h.total_records); }).catch(() => {});
     api.getDriftEvents().then((r) => setEvents(r.events ?? [])).catch(() => {});
   }, []);
 
@@ -53,6 +56,7 @@ export function DigitalTwin() {
       try {
         const r = await api.ingestToTwin(10);          // pull the next 10 SECOM records into the twin
         setEnded(r.ingested === 0);
+        if (typeof r.cursor === "number") setCursor(r.cursor);
         await refresh();
         const ev = await api.getDriftEvents();
         setEvents(ev.events ?? []);
@@ -61,7 +65,10 @@ export function DigitalTwin() {
     return () => clearInterval(id);
   }, [running]);
 
-  const replay = async () => { await api.resetTelemetry(); setEnded(false); setRunning(true); };
+  const replay = async () => {
+    await api.resetTelemetry();                          // resets the stream and the twin together
+    setCursor(0); setEnded(false); setEvents([]); history.current = {}; tick.current = 0; setRunning(true);
+  };
 
   if (!machines.length) {
     return (
@@ -74,7 +81,6 @@ export function DigitalTwin() {
 
   const byId = Object.fromEntries(machines.map((m) => [m.machine_id, m]));
   const count = (h: string) => machines.filter((m) => m.health === h).length;
-  const streamed = Math.max(...machines.filter((m) => !m.machine_id.startsWith("ETCH")).map((m) => m.records_processed));
   const alerting = machines.filter((m) => m.health !== "healthy");
   const byDetector = (d: string) => alerting.filter((m) => m.detected_by === d).length;
   const etch = [byId["ETCH-01"], byId["ETCH-02"]].filter(Boolean);
@@ -128,8 +134,8 @@ export function DigitalTwin() {
         <Kpi icon={<Radio size={16} />} label="Telemetry stream">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-slate-50 font-headline-md"><AnimatedNumber value={streamed} /></div>
-              <div className="text-xs text-slate-400">of 1,567 SECOM records</div>
+              <div className="text-3xl font-bold text-slate-50 font-headline-md"><AnimatedNumber value={cursor} /></div>
+              <div className="text-xs text-slate-400">of {total.toLocaleString("en-IN")} SECOM records</div>
             </div>
             <div className="flex gap-1.5">
               {ended ? (

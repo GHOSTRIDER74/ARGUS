@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "/api"; // proxied to the backend by Vite (see vite.config.ts)
 
 export const api = {
   getHealth: () => fetch(`${API_BASE}/health`).then(r => r.json()),

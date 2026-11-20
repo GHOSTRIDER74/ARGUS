@@ -113,6 +113,16 @@ class StateManager:
         self._etch_window = deque(maxlen=lstm.window if lstm else 1)
         self._initialize_machines()
 
+    def reset(self):
+        """Start the twin over: fresh machine states, no events, empty LSTM window.
+        Called when the telemetry stream is replayed from record 0."""
+        self.machines = {}
+        self._telemetry_buffer = []
+        self._drift_events = []
+        self._global_record_count = 0
+        self._etch_window.clear()
+        self._initialize_machines()
+
     def _initialize_machines(self):
         """Create machine state objects for the simulated fab."""
         for m in MACHINES:

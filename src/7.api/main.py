@@ -189,8 +189,9 @@ def telemetry_next(count: int = Query(1, ge=1, le=50)):
 
 @app.post("/api/telemetry/reset")
 def telemetry_reset():
-    """Reset the stream cursor."""
+    """Reset the stream cursor and the digital twin, so a replay starts from a clean state."""
     get_streamer().reset()
+    get_state_manager().reset()
     return {"status": "reset", "cursor": 0}
 
 
